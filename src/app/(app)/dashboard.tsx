@@ -3,19 +3,15 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppTabBar } from '@/components/app-tab-bar';
 import {
-  ActivityIcon,
   ArrowDownIcon,
   ArrowUpIcon,
-  BankIcon,
   BellIcon,
   EthAssetIcon,
-  GridIcon,
   HexLogo,
   MsftAssetIcon,
   PortfolioSparkline,
-  SettingsIcon,
-  SwapIcon,
   UsdcAssetIcon,
   UserIcon,
 } from '@/components/dashboard-icons';
@@ -204,30 +200,7 @@ export default function DashboardScreen() {
           <ThemedText style={styles.debugText}>Route: {pathname}</ThemedText>
         </View>
 
-        <View style={styles.tabBar}>
-          <View style={styles.tabItem}>
-            <GridIcon />
-            <ThemedText style={styles.tabLabelActive}>Dashboard</ThemedText>
-          </View>
-          <View style={styles.tabItem}>
-            <BankIcon />
-            <ThemedText style={styles.tabLabel}>Portfolio</ThemedText>
-          </View>
-          <View style={styles.tabItemActiveWrap}>
-            <View style={styles.tabItemActive}>
-              <SwapIcon />
-            </View>
-            <ThemedText style={styles.tabLabel}>Trade</ThemedText>
-          </View>
-          <View style={styles.tabItem}>
-            <ActivityIcon />
-            <ThemedText style={styles.tabLabel}>Activity</ThemedText>
-          </View>
-          <View style={styles.tabItem}>
-            <SettingsIcon />
-            <ThemedText style={styles.tabLabel}>Settings</ThemedText>
-          </View>
-        </View>
+        <AppTabBar />
       </SafeAreaView>
     </View>
   );
@@ -412,46 +385,5 @@ const styles = StyleSheet.create({
   debugText: {
     ...DesignType.dataSm,
     color: Design.colors.onSurfaceVariant,
-  },
-  tabBar: {
-    alignItems: 'flex-end',
-    borderTopColor: Design.colors.outlineVariant,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Design.space.sm,
-    paddingTop: Design.space.sm,
-  },
-  tabItem: {
-    alignItems: 'center',
-    flex: 1,
-    gap: 4,
-    paddingBottom: Design.space.sm,
-  },
-  tabItemActiveWrap: {
-    alignItems: 'center',
-    flex: 1,
-    gap: 4,
-    marginTop: -28,
-  },
-  tabItemActive: {
-    alignItems: 'center',
-    backgroundColor: Design.colors.primaryContainer,
-    borderRadius: Design.radius.xl,
-    height: 56,
-    justifyContent: 'center',
-    width: 56,
-  },
-  tabLabel: {
-    ...DesignType.labelCaps,
-    color: Design.colors.onSurfaceVariant,
-    fontSize: 9,
-    letterSpacing: 0.6,
-  },
-  tabLabelActive: {
-    ...DesignType.labelCaps,
-    color: Design.colors.primaryContainer,
-    fontSize: 9,
-    letterSpacing: 0.6,
   },
 });
