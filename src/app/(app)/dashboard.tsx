@@ -3,6 +3,7 @@ import { usePathname } from 'expo-router';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { EvmWalletAddress } from '@/components/evm-wallet-address';
 import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -39,6 +40,7 @@ export default function DashboardScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ThemedText type="title">Dashboard</ThemedText>
+        <EvmWalletAddress />
         <ThemedText type="small">Screen: src/app/(app)/dashboard.tsx</ThemedText>
         <ThemedText type="small">Route: {pathname}</ThemedText>
 
