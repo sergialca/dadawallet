@@ -7,7 +7,7 @@ import { Spacing } from '@/constants/theme';
 import { usePrivy } from '@privy-io/expo';
 
 export default function IndexScreen() {
-  const { isReady, error } = usePrivy();
+  const { isReady, error, user } = usePrivy();
   const pathname = usePathname();
 
   if (error) {
@@ -33,7 +33,11 @@ export default function IndexScreen() {
     );
   }
 
-  return <Redirect href="./home" />;
+  if (user) {
+    return <Redirect href="/dashboard" />;
+  }
+
+  return <Redirect href="/login" />;
 }
 
 const styles = StyleSheet.create({

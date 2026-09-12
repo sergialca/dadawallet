@@ -41,3 +41,10 @@ example
 # generated native folders
 /ios
 /android
+
+# agent files
+.agent/
+
+# test files
+coverage/
+
