@@ -58,7 +58,11 @@ export function AppTabBar() {
   return (
     <View style={styles.tabBar}>
       {TABS.map((tab) => {
-        const selected = tab.href ? pathname === tab.href : false;
+        const selected = tab.href
+          ? tab.href === '/trade'
+            ? pathname.startsWith('/trade')
+            : pathname === tab.href
+          : false;
         const iconColor = tab.prominent
           ? Design.colors.onPrimary
           : selected

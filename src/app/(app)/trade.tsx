@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
-import { usePathname } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { usePathname, useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppTabBar } from '@/components/app-tab-bar';
@@ -12,8 +12,16 @@ import { MaxContentWidth } from '@/constants/theme';
 import type { StockAsset } from '@/types/stocks';
 
 function StockRow({ stock }: { stock: StockAsset }) {
+  const router = useRouter();
+
   return (
-    <View style={styles.stockRow}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => {
+        router.push(`/trade/${stock.id}`);
+      }}
+      style={styles.stockRow}
+    >
       <View style={styles.logoWrap}>
         <Image
           accessibilityLabel={`${stock.name} logo`}
@@ -26,7 +34,7 @@ function StockRow({ stock }: { stock: StockAsset }) {
         <ThemedText style={styles.stockName}>{stock.name}</ThemedText>
         <ThemedText style={styles.stockTicker}>{stock.ticker}</ThemedText>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
