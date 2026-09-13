@@ -2,20 +2,14 @@ import { usePathname, useRouter, type Href } from 'expo-router';
 import { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import {
-  ActivityIcon,
-  BankIcon,
-  GridIcon,
-  SettingsIcon,
-  SwapIcon,
-} from '@/components/dashboard-icons';
+import { ActivityIcon, GridIcon, SwapIcon } from '@/components/dashboard-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
 
 type AppTab = {
-  href?: Href;
+  href: Href;
   icon: (props: { color: string }) => ReactNode;
-  key: 'dashboard' | 'portfolio' | 'trade' | 'activity' | 'settings';
+  key: 'dashboard' | 'trade' | 'activity';
   label: string;
   prominent?: boolean;
 };
@@ -26,11 +20,6 @@ const TABS: AppTab[] = [
     label: 'Dashboard',
     href: '/dashboard',
     icon: ({ color }) => <GridIcon color={color} />,
-  },
-  {
-    key: 'portfolio',
-    label: 'Portfolio',
-    icon: ({ color }) => <BankIcon color={color} />,
   },
   {
     key: 'trade',
@@ -45,11 +34,6 @@ const TABS: AppTab[] = [
     href: '/activity',
     icon: ({ color }) => <ActivityIcon color={color} />,
   },
-  {
-    key: 'settings',
-    label: 'Settings',
-    icon: ({ color }) => <SettingsIcon color={color} />,
-  },
 ];
 
 export function AppTabBar() {
@@ -59,11 +43,8 @@ export function AppTabBar() {
   return (
     <View style={styles.tabBar}>
       {TABS.map((tab) => {
-        const selected = tab.href
-          ? tab.href === '/trade'
-            ? pathname.startsWith('/trade')
-            : pathname === tab.href
-          : false;
+        const selected =
+          tab.href === '/trade' ? pathname.startsWith('/trade') : pathname === tab.href;
         const iconColor = tab.prominent
           ? Design.colors.onPrimary
           : selected
@@ -74,10 +55,9 @@ export function AppTabBar() {
           <Pressable
             accessibilityRole="tab"
             accessibilityState={{ selected }}
-            disabled={!tab.href}
             key={tab.key}
             onPress={() => {
-              if (tab.href && pathname !== tab.href) {
+              if (pathname !== tab.href) {
                 router.replace(tab.href);
               }
             }}
