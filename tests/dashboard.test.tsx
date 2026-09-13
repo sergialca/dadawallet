@@ -1,16 +1,11 @@
-import { usePrivy } from '@privy-io/expo';
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { usePathname } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 
 import DashboardScreen from '@/app/(app)/dashboard';
 
 jest.mock('expo-router', () => ({
   usePathname: jest.fn(),
-}));
-
-jest.mock('@privy-io/expo', () => ({
-  usePrivy: jest.fn(),
-  useEmbeddedEthereumWallet: jest.fn(),
+  useRouter: jest.fn(),
 }));
 
 jest.mock('expo-clipboard', () => ({
@@ -31,15 +26,17 @@ jest.mock('@/hooks/use-evm-wallet', () => ({
 }));
 
 const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
-const mockUsePrivy = usePrivy as jest.MockedFunction<typeof usePrivy>;
+const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
 
 describe('DashboardScreen', () => {
-  const logout = jest.fn();
+  const router = {
+    push: jest.fn(),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockUsePathname.mockReturnValue('/dashboard');
-    mockUsePrivy.mockReturnValue({ logout } as unknown as ReturnType<typeof usePrivy>);
+    mockUseRouter.mockReturnValue(router as unknown as ReturnType<typeof useRouter>);
   });
 
   test('renders the portfolio dashboard and keeps screen and route paths at the bottom', async () => {
@@ -67,11 +64,11 @@ describe('DashboardScreen', () => {
     expect(screen.getByText('Microsoft')).toBeOnTheScreen();
   });
 
-  test('logs out from the profile control', async () => {
+  test('opens the profile screen from the user icon', async () => {
     await render(<DashboardScreen />);
 
-    fireEvent.press(await screen.findByLabelText('Log out'));
+    fireEvent.press(await screen.findByLabelText('Profile'));
 
-    expect(logout).toHaveBeenCalledTimes(1);
+    expect(router.push).toHaveBeenCalledWith('/profile');
   });
 });
