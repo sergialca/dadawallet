@@ -1,4 +1,4 @@
-import { usePathname } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +7,6 @@ import { AppTabBar } from '@/components/app-tab-bar';
 import {
   ArrowDownIcon,
   ArrowUpIcon,
-  BellIcon,
   EthAssetIcon,
   HexLogo,
   MsftAssetIcon,
@@ -20,7 +19,6 @@ import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
 import { MaxContentWidth } from '@/constants/theme';
 import { useWalletBalances, type WalletAsset } from '@/hooks/use-wallet-balances';
-import { usePrivy } from '@privy-io/expo';
 
 type WatchlistRow = {
   amount: string;
@@ -51,7 +49,7 @@ function AssetIcon({ icon }: { icon: WalletAsset['icon'] }) {
 
 export default function DashboardScreen() {
   const pathname = usePathname();
-  const { logout } = usePrivy();
+  const router = useRouter();
   const { assets, error, isLoading, totalUsdLabel } = useWalletBalances();
   const [listTab, setListTab] = useState<'assets' | 'watchlist'>('assets');
 
@@ -73,14 +71,11 @@ export default function DashboardScreen() {
             </View>
             <View style={styles.headerActions}>
               <EvmWalletAddress />
-              <Pressable accessibilityLabel="Notifications" accessibilityRole="button" style={styles.iconButton}>
-                <BellIcon />
-              </Pressable>
               <Pressable
-                accessibilityLabel="Log out"
+                accessibilityLabel="Profile"
                 accessibilityRole="button"
                 onPress={() => {
-                  void logout();
+                  router.push('/profile');
                 }}
                 style={styles.profileButton}
               >
@@ -251,12 +246,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: Design.space.sm,
-  },
-  iconButton: {
-    alignItems: 'center',
-    height: 36,
-    justifyContent: 'center',
-    width: 28,
   },
   profileButton: {
     alignItems: 'center',
