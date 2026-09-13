@@ -42,6 +42,7 @@ const TABS: AppTab[] = [
   {
     key: 'activity',
     label: 'Activity',
+    href: '/activity',
     icon: ({ color }) => <ActivityIcon color={color} />,
   },
   {

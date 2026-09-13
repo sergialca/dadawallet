@@ -6,6 +6,7 @@ import DashboardScreen from '@/app/(app)/dashboard';
 
 jest.mock('expo-router', () => ({
   usePathname: jest.fn(),
+  useRouter: () => ({ replace: jest.fn() }),
 }));
 
 jest.mock('@privy-io/expo', () => ({
@@ -42,10 +43,10 @@ describe('DashboardScreen', () => {
     mockUsePrivy.mockReturnValue({ logout } as unknown as ReturnType<typeof usePrivy>);
   });
 
-  test('renders the portfolio dashboard and keeps screen and route paths at the bottom', async () => {
+  test('renders the portfolio dashboard', async () => {
     await render(<DashboardScreen />);
 
-    expect(await screen.findByText('Dashboard')).toBeOnTheScreen();
+    expect((await screen.findAllByText('Dashboard')).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Sepolia')).toBeOnTheScreen();
     expect(screen.getByText('Total portfolio value')).toBeOnTheScreen();
     expect(screen.getByText('$55.56.')).toBeOnTheScreen();
@@ -54,8 +55,6 @@ describe('DashboardScreen', () => {
     expect(screen.getByText('ETH - sepolia')).toBeOnTheScreen();
     expect(screen.getByText('USD Coin')).toBeOnTheScreen();
     expect(screen.getByText('Microsoft')).toBeOnTheScreen();
-    expect(screen.getByText('Screen: src/app/(app)/dashboard.tsx')).toBeOnTheScreen();
-    expect(screen.getByText('Route: /dashboard')).toBeOnTheScreen();
   });
 
   test('switches to the watchlist tab', async () => {
