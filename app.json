@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "fufuwallet",
-    "slug": "fufuwallet",
+    "name": "dadawallet",
+    "slug": "dadawallet",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "fufuwallet",
+    "scheme": "dadawallet",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.fufuwallet.app",
+      "bundleIdentifier": "com.dadawallet.app",
       "usesAppleSignIn": true
     },
     "android": {
@@ -19,7 +19,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "com.fufuwallet.app",
+      "package": "com.dadawallet.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {
