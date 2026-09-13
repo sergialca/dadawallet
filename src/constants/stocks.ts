@@ -105,3 +105,7 @@ export const stockCatalog: StockCatalog = {
 };
 
 export const listedStocks = stockCatalog.stocks.filter((stock) => stock.isAvailable);
+
+export function getStockById(stockId: string) {
+  return listedStocks.find((stock) => stock.id === stockId) ?? null;
+}
