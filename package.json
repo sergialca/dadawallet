@@ -59,9 +59,12 @@
     "react-test-renderer": "^19.3.0",
     "typescript": "~6.0.3"
   },
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
+    "setup": "node ./scripts/setup-dev.js",
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
