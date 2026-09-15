@@ -11,32 +11,36 @@ The wallet lives on **Ethereum Sepolia** for balances and activity. Stock quotes
 
 ## Stack
 
-| Layer | Choice |
-| --- | --- |
-| App runtime | [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) / React Native 0.86 / React 19 |
-| Navigation | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routes in `src/app`) |
+
+| Layer       | Choice                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------ |
+| App runtime | [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) / React Native 0.86 / React 19                        |
+| Navigation  | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routes in `src/app`)                   |
 | Auth + keys | [Privy](https://docs.privy.io/basics/react-native/installation) embedded Ethereum wallets (`@privy-io/expo`) |
-| Chain I/O | [viem](https://viem.sh/) for RPC, ERC-20 reads, and send flows |
-| Transfers | Alchemy `alchemy_getAssetTransfers` on Sepolia |
-| Equities | Ondo Global Markets HTTP API + onchain mint/redeem |
-| UI | React Native, the local design tokens in `src/constants/design.ts` |
-| Tests | Jest + Testing Library (`pnpm test`) |
+| Chain I/O   | [viem](https://viem.sh/) for RPC, ERC-20 reads, and send flows                                               |
+| Transfers   | Alchemy `alchemy_getAssetTransfers` on Sepolia                                                               |
+| Equities    | Ondo Global Markets HTTP API + onchain mint/redeem                                                           |
+| UI          | React Native, the local design tokens in `src/constants/design.ts`                                           |
+| Tests       | Jest + Testing Library (`pnpm test`)                                                                         |
+
 
 Privy, passkeys, and secure storage need a **native development build**. Expo Go is not enough.
 
 ## Local setup
+
+
 
 ### Prerequisites
 
 - **Node.js 22.13+** (required by Expo SDK 57)
 - **[pnpm](https://pnpm.io/installation)** (this repo uses `pnpm-lock.yaml`)
 - A [Privy](https://dashboard.privy.io) app with a **React Native app client**
-  - Allowed identifier: `com.dadawallet.app`
-  - Allowed URL scheme: `dadawallet`
 - An [Alchemy](https://www.alchemy.com/) API key with **Sepolia** enabled (activity screen)
 - Optional: an [Ondo](https://ondo.finance) API key for live stock quotes
 - **iOS:** Xcode and a Simulator (or device)
 - **Android:** Android Studio, SDK, and an emulator (or device)
+
+
 
 ### One-shot setup
 
@@ -80,14 +84,18 @@ pnpm start
 
 ### Other scripts
 
-| Script | What it does |
-| --- | --- |
-| `pnpm setup` | Node check, `.env` bootstrap, install dependencies |
-| `pnpm start` | Start the Expo dev server |
-| `pnpm ios` | Compile and launch the iOS development build |
-| `pnpm android` | Compile and launch the Android development build |
-| `pnpm test` | Run Jest once |
-| `pnpm lint` | Run Expo lint |
+
+| Script         | What it does                                       |
+| -------------- | -------------------------------------------------- |
+| `pnpm setup`   | Node check, `.env` bootstrap, install dependencies |
+| `pnpm start`   | Start the Expo dev server                          |
+| `pnpm ios`     | Compile and launch the iOS development build       |
+| `pnpm android` | Compile and launch the Android development build   |
+| `pnpm test`    | Run Jest once                                      |
+| `pnpm lint`    | Run Expo lint                                      |
+
+
+
 
 ## Project layout
 
