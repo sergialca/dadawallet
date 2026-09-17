@@ -5,7 +5,6 @@ import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PrivyProvider } from '@privy-io/expo';
-import { sepolia } from 'viem/chains';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -38,10 +37,9 @@ export default function RootLayout() {
     <PrivyProvider
       appId={privyAppId}
       clientId={privyClientId}
-      supportedChains={[sepolia]}
       config={{
         embedded: {
-          ethereum: {
+          solana: {
             createOnLogin: 'users-without-wallets',
           },
         },
