@@ -205,12 +205,13 @@ export function SettingsIcon({ color = Design.colors.onSurfaceVariant, size = 22
   );
 }
 
-export function EthAssetIcon() {
+export function SolAssetIcon() {
   return (
     <Svg width={40} height={40} viewBox="0 0 40 40">
-      <Circle cx="20" cy="20" r="20" fill="#001016" />
-      <Path d="M20 8 12 20.2 20 16.4 28 20.2 20 8Z" fill={Design.colors.primaryContainer} />
-      <Path d="M20 32 12 21.4 20 25.4 28 21.4 20 32Z" fill={Design.colors.secondary} />
+      <Circle cx="20" cy="20" r="20" fill="#0c1220" />
+      <Path d="M12 14h17l-3.5 4H8.5z" fill="#9945FF" />
+      <Path d="M12 20h17l-3.5 4H8.5z" fill="#14F195" />
+      <Path d="M12 26h17l-3.5 4H8.5z" fill="#00C2FF" />
     </Svg>
   );
 }

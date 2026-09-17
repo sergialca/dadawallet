@@ -7,16 +7,17 @@ import { AppTabBar } from '@/components/app-tab-bar';
 import {
   ArrowDownIcon,
   ArrowUpIcon,
-  EthAssetIcon,
+  SolAssetIcon,
   HexLogo,
   MsftAssetIcon,
   PortfolioSparkline,
   UsdcAssetIcon,
   UserIcon,
 } from '@/components/dashboard-icons';
-import { EvmWalletAddress } from '@/components/evm-wallet-address';
+import { SolanaWalletAddress } from '@/components/solana-wallet-address';
 import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
+import { SolanaNetworkLabel } from '@/constants/tokens';
 import { MaxContentWidth } from '@/constants/theme';
 import { useWalletBalances, type WalletAsset } from '@/hooks/use-wallet-balances';
 
@@ -41,8 +42,8 @@ const WATCHLIST: WatchlistRow[] = [
 ];
 
 function AssetIcon({ icon }: { icon: WalletAsset['icon'] }) {
-  if (icon === 'eth') {
-    return <EthAssetIcon />;
+  if (icon === 'sol') {
+    return <SolAssetIcon />;
   }
   return <UsdcAssetIcon />;
 }
@@ -65,12 +66,12 @@ export default function DashboardScreen() {
             <View style={styles.brand}>
               <HexLogo />
               <View>
-                <ThemedText style={styles.networkLabel}>Sepolia</ThemedText>
+                <ThemedText style={styles.networkLabel}>{SolanaNetworkLabel}</ThemedText>
                 <ThemedText style={styles.headline}>Dashboard</ThemedText>
               </View>
             </View>
             <View style={styles.headerActions}>
-              <EvmWalletAddress />
+              <SolanaWalletAddress />
               <Pressable
                 accessibilityLabel="Profile"
                 accessibilityRole="button"
