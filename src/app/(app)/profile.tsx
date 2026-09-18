@@ -8,7 +8,7 @@ import { CopyIcon, HexLogo } from '@/components/dashboard-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
 import { MaxContentWidth } from '@/constants/theme';
-import { useEvmWallet } from '@/hooks/use-evm-wallet';
+import { useSolanaWallet } from '@/hooks/use-solana-wallet';
 import { usePrivy, type User } from '@privy-io/expo';
 
 export function getLinkedEmail(user: User | null) {
@@ -20,7 +20,7 @@ export default function ProfileScreen() {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user } = usePrivy();
-  const { address, error, isLoading } = useEvmWallet();
+  const { address, error, isLoading } = useSolanaWallet();
   const email = getLinkedEmail(user);
 
   return (

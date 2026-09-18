@@ -12,7 +12,7 @@ jest.mock('expo-router', () => ({
 
 jest.mock('@privy-io/expo', () => ({
   usePrivy: jest.fn(),
-  useEmbeddedEthereumWallet: jest.fn(),
+  useEmbeddedSolanaWallet: jest.fn(),
 }));
 
 jest.mock('expo-clipboard', () => ({
@@ -23,8 +23,8 @@ jest.mock('@/hooks/use-color-scheme', () => ({
   useColorScheme: () => 'dark',
 }));
 
-jest.mock('@/hooks/use-evm-wallet', () => ({
-  useEvmWallet: () => ({
+jest.mock('@/hooks/use-solana-wallet', () => ({
+  useSolanaWallet: () => ({
     address: '0x1111111111111111111111111111111111111111',
     error: null,
     isLoading: false,
