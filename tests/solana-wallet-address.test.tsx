@@ -1,12 +1,12 @@
-import { useEmbeddedEthereumWallet, usePrivy } from '@privy-io/expo';
+import { useEmbeddedSolanaWallet, usePrivy } from '@privy-io/expo';
 import * as Clipboard from 'expo-clipboard';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
-import { EvmWalletAddress, truncateEvmAddress } from '@/components/evm-wallet-address';
+import { SolanaWalletAddress, truncateSolanaAddress } from '@/components/solana-wallet-address';
 
 jest.mock('@privy-io/expo', () => ({
   usePrivy: jest.fn(),
-  useEmbeddedEthereumWallet: jest.fn(),
+  useEmbeddedSolanaWallet: jest.fn(),
 }));
 
 jest.mock('expo-clipboard', () => ({
@@ -18,14 +18,14 @@ jest.mock('@/hooks/use-color-scheme', () => ({
 }));
 
 const mockUsePrivy = usePrivy as jest.MockedFunction<typeof usePrivy>;
-const mockUseEmbeddedEthereumWallet = useEmbeddedEthereumWallet as jest.MockedFunction<
-  typeof useEmbeddedEthereumWallet
+const mockUseEmbeddedSolanaWallet = useEmbeddedSolanaWallet as jest.MockedFunction<
+  typeof useEmbeddedSolanaWallet
 >;
 const mockSetStringAsync = Clipboard.setStringAsync as jest.MockedFunction<typeof Clipboard.setStringAsync>;
 
-const EXISTING_ADDRESS = '0x1111111111111111111111111111111111111111';
+const EXISTING_ADDRESS = '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV';
 
-describe('EvmWalletAddress', () => {
+describe('SolanaWalletAddress', () => {
   const create = jest.fn();
 
   beforeEach(() => {
@@ -40,14 +40,14 @@ describe('EvmWalletAddress', () => {
       isReady: true,
     } as ReturnType<typeof usePrivy>);
 
-    mockUseEmbeddedEthereumWallet.mockReturnValue({
-      wallets: [{ address: EXISTING_ADDRESS, chainType: 'ethereum', walletIndex: 0, getProvider: jest.fn() }],
+    mockUseEmbeddedSolanaWallet.mockReturnValue({
+      wallets: [{ address: EXISTING_ADDRESS, chainType: 'solana', walletIndex: 0, getProvider: jest.fn() }],
       create,
-    } as unknown as ReturnType<typeof useEmbeddedEthereumWallet>);
+    } as unknown as ReturnType<typeof useEmbeddedSolanaWallet>);
 
-    await render(<EvmWalletAddress />);
+    await render(<SolanaWalletAddress />);
 
-    expect(await screen.findByText(truncateEvmAddress(EXISTING_ADDRESS))).toBeOnTheScreen();
+    expect(await screen.findByText(truncateSolanaAddress(EXISTING_ADDRESS))).toBeOnTheScreen();
     expect(create).not.toHaveBeenCalled();
   });
 
@@ -57,12 +57,12 @@ describe('EvmWalletAddress', () => {
       isReady: true,
     } as ReturnType<typeof usePrivy>);
 
-    mockUseEmbeddedEthereumWallet.mockReturnValue({
-      wallets: [{ address: EXISTING_ADDRESS, chainType: 'ethereum', walletIndex: 0, getProvider: jest.fn() }],
+    mockUseEmbeddedSolanaWallet.mockReturnValue({
+      wallets: [{ address: EXISTING_ADDRESS, chainType: 'solana', walletIndex: 0, getProvider: jest.fn() }],
       create,
-    } as unknown as ReturnType<typeof useEmbeddedEthereumWallet>);
+    } as unknown as ReturnType<typeof useEmbeddedSolanaWallet>);
 
-    await render(<EvmWalletAddress />);
+    await render(<SolanaWalletAddress />);
 
     fireEvent.press(await screen.findByLabelText(`Wallet address ${EXISTING_ADDRESS}`));
 
@@ -71,18 +71,18 @@ describe('EvmWalletAddress', () => {
     });
   });
 
-  test('creates an embedded EVM wallet for a first-time user', async () => {
+  test('creates an embedded Solana wallet for a first-time user', async () => {
     mockUsePrivy.mockReturnValue({
       user: { id: 'did:privy:new-user' },
       isReady: true,
     } as ReturnType<typeof usePrivy>);
 
-    mockUseEmbeddedEthereumWallet.mockReturnValue({
+    mockUseEmbeddedSolanaWallet.mockReturnValue({
       wallets: [],
       create,
-    } as unknown as ReturnType<typeof useEmbeddedEthereumWallet>);
+    } as unknown as ReturnType<typeof useEmbeddedSolanaWallet>);
 
-    await render(<EvmWalletAddress />);
+    await render(<SolanaWalletAddress />);
 
     expect(await screen.findByText('Preparing wallet…')).toBeOnTheScreen();
     await waitFor(() => {

@@ -4,14 +4,14 @@ import { Pressable, StyleSheet } from 'react-native';
 import { CopyIcon } from '@/components/dashboard-icons';
 import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
-import { useEvmWallet } from '@/hooks/use-evm-wallet';
+import { useSolanaWallet } from '@/hooks/use-solana-wallet';
 
-export function truncateEvmAddress(address: string) {
+export function truncateSolanaAddress(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-2)}`;
 }
 
-export function EvmWalletAddress() {
-  const { address, error, isLoading } = useEvmWallet();
+export function SolanaWalletAddress() {
+  const { address, error, isLoading } = useSolanaWallet();
 
   if (isLoading) {
     return (
@@ -33,7 +33,7 @@ export function EvmWalletAddress() {
     return null;
   }
 
-  const truncated = truncateEvmAddress(address);
+  const truncated = truncateSolanaAddress(address);
 
   return (
     <Pressable
