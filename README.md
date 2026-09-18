@@ -1,13 +1,13 @@
 # dadawallet
 
-dadawallet is a mobile app for holding and trading onchain assets from a single embedded wallet. Sign in with email, get an Ethereum wallet created for you, then:
+dadawallet is a mobile app for holding and trading onchain assets from a single embedded wallet. Sign in with email, get a Solana wallet created for you, then:
 
-- See Sepolia ETH and USDC balances on the dashboard
+- See SOL and USDC balances on the dashboard
 - Browse and trade tokenized stocks through [Ondo Global Markets](https://ondo.finance)
 - Review incoming and outgoing transfers on the activity screen
 - Open profile to copy the wallet address or log out
 
-The wallet lives on **Ethereum Sepolia** for balances and activity. Stock quotes and settlement target **Ethereum mainnet** USDC via Ondo’s API.
+The wallet lives on **Solana Devnet** for balances and activity. Stock quotes still target **Ethereum** USDC via Ondo’s API.
 
 ## Stack
 
@@ -16,9 +16,9 @@ The wallet lives on **Ethereum Sepolia** for balances and activity. Stock quotes
 | ----------- | ------------------------------------------------------------------------------------------------------------ |
 | App runtime | [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) / React Native 0.86 / React 19                        |
 | Navigation  | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routes in `src/app`)                   |
-| Auth + keys | [Privy](https://docs.privy.io/basics/react-native/installation) embedded Ethereum wallets (`@privy-io/expo`) |
-| Chain I/O   | [viem](https://viem.sh/) for RPC, ERC-20 reads, and send flows                                               |
-| Transfers   | Alchemy `alchemy_getAssetTransfers` on Sepolia                                                               |
+| Auth + keys | [Privy](https://docs.privy.io/basics/react-native/installation) embedded Solana wallets (`@privy-io/expo`)   |
+| Chain I/O   | Solana JSON-RPC (`getBalance`, SPL token accounts) plus Privy `signAndSendTransaction`                       |
+| Transfers   | Solana `getSignaturesForAddress` / `getTransaction`                                                          |
 | Equities    | Ondo Global Markets HTTP API + onchain mint/redeem                                                           |
 | UI          | React Native, the local design tokens in `src/constants/design.ts`                                           |
 | Tests       | Jest + Testing Library (`pnpm test`)                                                                         |
@@ -35,7 +35,7 @@ Privy, passkeys, and secure storage need a **native development build**. Expo Go
 - **Node.js 22.13+** (required by Expo SDK 57)
 - **[pnpm](https://pnpm.io/installation)** (this repo uses `pnpm-lock.yaml`)
 - A [Privy](https://dashboard.privy.io) app with a **React Native app client**
-- An [Alchemy](https://www.alchemy.com/) API key with **Sepolia** enabled (activity screen)
+- Optional: `EXPO_PUBLIC_SOLANA_RPC_URL` for a custom Solana Devnet node (defaults to `https://api.devnet.solana.com`)
 - Optional: an [Ondo](https://ondo.finance) API key for live stock quotes
 - **iOS:** Xcode and a Simulator (or device)
 - **Android:** Android Studio, SDK, and an emulator (or device)
@@ -61,7 +61,7 @@ Then edit `.env`:
 ```bash
 EXPO_PUBLIC_PRIVY_APP_ID=
 EXPO_PUBLIC_PRIVY_CLIENT_ID=
-EXPO_PUBLIC_ALCHEMY_API_KEY=
+EXPO_PUBLIC_SOLANA_RPC_URL=
 EXPO_PUBLIC_ONDO_API_KEY=
 ```
 
@@ -103,7 +103,7 @@ pnpm start
 src/app/            Screens (Expo Router)
 src/components/     Shared UI
 src/hooks/          Wallet, balances, quotes, activity
-src/lib/            Alchemy transfers and formatting
+src/lib/            Solana RPC, transfers, and formatting
 src/constants/      Tokens, Ondo, design system
 ```
 

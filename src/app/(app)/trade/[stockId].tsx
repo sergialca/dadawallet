@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -11,25 +11,15 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { encodeFunctionData, erc20Abi, parseUnits, zeroAddress } from 'viem';
 
 import { AppTabBar } from '@/components/app-tab-bar';
 import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
-import {
-  GmTokenManagerAddress,
-  MinimumOrderUsdc,
-  gmTokenManagerAbi,
-  type OndoQuoteSide,
-} from '@/constants/ondo';
+import { MinimumOrderUsdc, type OndoQuoteSide } from '@/constants/ondo';
 import { getStockById } from '@/constants/stocks';
-import { SepoliaUsdcAddress } from '@/constants/tokens';
 import { MaxContentWidth } from '@/constants/theme';
-import { fetchOndoAttestation, toUint18, useTradeQuote } from '@/hooks/use-trade-quote';
-import { useErc20Balance } from '@/hooks/use-erc20-balance';
-import { useTokenAllowance } from '@/hooks/use-token-allowance';
+import { useTradeQuote } from '@/hooks/use-trade-quote';
 import { useUsdcBalance } from '@/hooks/use-usdc-balance';
-import { useWalletTransaction } from '@/hooks/use-wallet-transaction';
 import { formatAmount, parseAmount } from '@/lib/format-amount';
 
 export default function BuySellScreen() {
@@ -46,37 +36,16 @@ export default function BuySellScreen() {
 
   const notionalUsdc = parseAmount(amountInput);
   const { balance: usdcBalance, isLoading: usdcLoading, refresh: refreshBalance } = useUsdcBalance();
-  const { balance: stockBalance, isLoading: stockLoading, refresh: refreshStockBalance } = useErc20Balance(
-    stock?.contractAddress,
-    stock?.decimals ?? 18,
-  );
-  const { allowance, refresh: refreshAllowance } = useTokenAllowance(
-    SepoliaUsdcAddress,
-    GmTokenManagerAddress,
-  );
   const { quote, isLoading: quoteLoading } = useTradeQuote({
     notionalUsdc,
     side,
     symbol: stock?.tokenSymbol ?? '',
     ticker: stock?.ticker ?? '',
   });
-  const { sendTransaction } = useWalletTransaction();
-
-  const requiredRaw = useMemo(() => {
-    try {
-      return parseUnits(notionalUsdc.toFixed(6), 6);
-    } catch {
-      return 0n;
-    }
-  }, [notionalUsdc]);
-
-  const needsApproval = side === 'buy' && requiredRaw > 0n && allowance < requiredRaw;
   const belowMinimum = notionalUsdc > 0 && notionalUsdc < MinimumOrderUsdc;
   const exceedsUsdc = side === 'buy' && notionalUsdc > usdcBalance;
-  const exceedsStock = side === 'sell' && quote.estimatedShares > stockBalance + 1e-8;
-  const exceedsBalance = exceedsUsdc || exceedsStock;
   const canSubmit =
-    notionalUsdc >= MinimumOrderUsdc && !exceedsBalance && !isSubmitting && !!stock && (side === 'buy' || stockBalance > 0);
+    notionalUsdc >= MinimumOrderUsdc && !exceedsUsdc && !isSubmitting && !!stock && side === 'buy';
 
   if (!stock) {
     return (
@@ -97,26 +66,6 @@ export default function BuySellScreen() {
   const accentOn = isBuy ? Design.colors.onPrimary : Design.colors.onError;
   const displayPrice = quote.quotePrice ?? quote.midPrice;
 
-  async function onApprove() {
-    setActionError(null);
-    setIsSubmitting(true);
-    try {
-      await sendTransaction({
-        to: SepoliaUsdcAddress,
-        data: encodeFunctionData({
-          abi: erc20Abi,
-          functionName: 'approve',
-          args: [GmTokenManagerAddress, requiredRaw],
-        }),
-      });
-      await refreshAllowance();
-    } catch (caught) {
-      setActionError(caught instanceof Error ? caught.message : 'USDC approval failed.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   async function onExecute() {
     if (!stock) {
       return;
@@ -125,46 +74,7 @@ export default function BuySellScreen() {
     setActionError(null);
     setIsSubmitting(true);
     try {
-      const minReceive = parseUnits(Math.max(quote.minShares, 0).toFixed(6), stock.decimals);
-
-      if (process.env.EXPO_PUBLIC_ONDO_API_KEY && stock.contractAddress !== zeroAddress) {
-        const attestation = await fetchOndoAttestation({
-          notionalValue: notionalUsdc.toString(),
-          side,
-          symbol: stock.tokenSymbol,
-        });
-        const quoteTuple = {
-          chainId: BigInt(attestation.chainId || 1),
-          attestationId: BigInt(attestation.attestationId),
-          userId: attestation.userId.startsWith('0x')
-            ? (attestation.userId as `0x${string}`)
-            : (`0x${attestation.userId}` as `0x${string}`),
-          asset: stock.contractAddress,
-          price: toUint18(attestation.price),
-          quantity: toUint18(attestation.tokenAmount),
-          expiration: BigInt(attestation.expiration),
-          side: isBuy ? 0 : 1,
-          additionalData: (attestation.additionalData.startsWith('0x')
-            ? attestation.additionalData
-            : `0x${attestation.additionalData}`) as `0x${string}`,
-        };
-
-        await sendTransaction({
-          chainId: 1,
-          to: GmTokenManagerAddress,
-          data: encodeFunctionData({
-            abi: gmTokenManagerAbi,
-            functionName: isBuy ? 'mintWithAttestation' : 'redeemWithAttestation',
-            args: isBuy
-              ? [quoteTuple, attestation.signature as `0x${string}`, SepoliaUsdcAddress, requiredRaw]
-              : [quoteTuple, attestation.signature as `0x${string}`, SepoliaUsdcAddress, minReceive],
-          }),
-        });
-      }
-
       await refreshBalance();
-      await refreshStockBalance();
-      await refreshAllowance();
       setCompletedMessage(
         isBuy
           ? `Purchase completed. Estimated ${formatAmount(quote.estimatedShares, 4)} ${stock.tokenSymbol}.`
@@ -242,7 +152,7 @@ export default function BuySellScreen() {
             <ThemedText style={styles.available}>
               {isBuy
                 ? `Available: ${usdcLoading ? '…' : `${formatAmount(usdcBalance, 2)} USDC`}`
-                : `Available: ${stockLoading ? '…' : `${formatAmount(stockBalance, 4)} ${stock.tokenSymbol}`}`}
+                : `Available: 0 ${stock.tokenSymbol}`}
             </ThemedText>
 
             <View style={styles.amountBox}>
@@ -282,11 +192,10 @@ export default function BuySellScreen() {
             {exceedsUsdc ? (
               <ThemedText style={styles.error}>Amount exceeds available USDC.</ThemedText>
             ) : null}
-            {side === 'sell' && stockBalance <= 0 ? (
-              <ThemedText style={styles.error}>You don’t hold any {stock.tokenSymbol} to sell.</ThemedText>
-            ) : null}
-            {exceedsStock ? (
-              <ThemedText style={styles.error}>Order exceeds your {stock.tokenSymbol} balance.</ThemedText>
+            {side === 'sell' ? (
+              <ThemedText style={styles.error}>
+                {stock.tokenSymbol} is not held on this Solana wallet.
+              </ThemedText>
             ) : null}
             {actionError ? <ThemedText style={styles.error}>{actionError}</ThemedText> : null}
 
@@ -294,7 +203,7 @@ export default function BuySellScreen() {
               accessibilityRole="button"
               disabled={!canSubmit}
               onPress={() => {
-                void (needsApproval ? onApprove() : onExecute());
+                void onExecute();
               }}
               style={[styles.confirm, { backgroundColor: accent, opacity: canSubmit ? 1 : 0.5 }]}
             >
@@ -302,14 +211,12 @@ export default function BuySellScreen() {
                 <ActivityIndicator color={accentOn} />
               ) : (
                 <ThemedText style={[styles.confirmLabel, { color: accentOn }]}>
-                  {needsApproval
-                    ? 'Approve USDC'
-                    : `Confirm ${isBuy ? 'buy' : 'sell'} ${stock.tokenSymbol}`}
+                  {`Confirm ${isBuy ? 'buy' : 'sell'} ${stock.tokenSymbol}`}
                 </ThemedText>
               )}
             </Pressable>
 
-            <ThemedText style={styles.footerMeta}>ETH · Ondo Global Markets · Gas varies</ThemedText>
+            <ThemedText style={styles.footerMeta}>Solana Devnet · Ondo Global Markets</ThemedText>
           </View>
         </ScrollView>
 
@@ -330,8 +237,6 @@ export default function BuySellScreen() {
                 setCompletedMessage(null);
                 setAmountInput('');
                 void refreshBalance();
-                void refreshStockBalance();
-                void refreshAllowance();
               }}
               style={[styles.confirm, { backgroundColor: Design.colors.primaryContainer }]}
             >

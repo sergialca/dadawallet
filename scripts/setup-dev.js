@@ -43,7 +43,7 @@ if (install.status !== 0) {
 console.log(`
 Setup complete.
 
-1. Fill in .env (Privy is required; Alchemy and Ondo unlock activity and live quotes).
+1. Fill in .env (Privy is required; Ondo unlocks live stock quotes).
 2. Build a native dev client: pnpm ios   or   pnpm android
 3. Restart Expo after changing .env.
 
