@@ -8,7 +8,8 @@ import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
 import { MaxContentWidth } from '@/constants/theme';
 import { useWalletActivity } from '@/hooks/use-wallet-activity';
-import type { WalletTransfer } from '@/lib/alchemy-transfers';
+import { SolanaNetworkLabel } from '@/constants/tokens';
+import type { WalletTransfer } from '@/lib/solana-transfers';
 
 function TransferField({ label, value }: { label: string; value: string }) {
   return (
@@ -61,7 +62,7 @@ export default function ActivityScreen() {
           <View style={styles.header}>
             <HexLogo />
             <View>
-              <ThemedText style={styles.networkLabel}>Sepolia</ThemedText>
+              <ThemedText style={styles.networkLabel}>{SolanaNetworkLabel}</ThemedText>
               <ThemedText style={styles.headline}>Activity</ThemedText>
             </View>
           </View>

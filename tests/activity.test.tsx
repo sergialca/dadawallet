@@ -26,7 +26,7 @@ describe('ActivityScreen', () => {
     mockUsePathname.mockReturnValue('/activity');
   });
 
-  test('lists wallet transfers from Alchemy', async () => {
+  test('lists wallet transfers from Solana RPC', async () => {
     mockUseWalletActivity.mockReturnValue({
       error: null,
       isLoading: false,
