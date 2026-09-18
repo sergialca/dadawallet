@@ -16,12 +16,12 @@ jest.mock('@/hooks/use-color-scheme', () => ({
   useColorScheme: () => 'dark',
 }));
 
-jest.mock('@/hooks/use-evm-wallet', () => ({
-  useEvmWallet: () => ({
-    address: '0x1111111111111111111111111111111111111111',
+jest.mock('@/hooks/use-solana-wallet', () => ({
+  useSolanaWallet: () => ({
+    address: '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV',
     error: null,
     isLoading: false,
-    wallet: { address: '0x1111111111111111111111111111111111111111' },
+    wallet: { address: '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV' },
   }),
 }));
 
@@ -29,11 +29,11 @@ jest.mock('@/hooks/use-wallet-balances', () => ({
   useWalletBalances: () => ({
     assets: [
       {
-        id: 'eth',
-        icon: 'eth',
-        name: 'ETH - sepolia',
-        symbol: 'ETH',
-        amountLabel: '0.02 ETH',
+        id: 'sol',
+        icon: 'sol',
+        name: 'SOL',
+        symbol: 'SOL',
+        amountLabel: '0.02 SOL',
         usdValue: 50,
         usdLabel: '$50',
       },
@@ -73,12 +73,12 @@ describe('DashboardScreen', () => {
     await render(<DashboardScreen />);
 
     expect((await screen.findAllByText('Dashboard')).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Sepolia')).toBeOnTheScreen();
+    expect(screen.getByText('Solana Devnet')).toBeOnTheScreen();
     expect(screen.getByText('Total portfolio value')).toBeOnTheScreen();
     expect(screen.getByText('$55.56')).toBeOnTheScreen();
     expect(screen.getByText('Receive')).toBeOnTheScreen();
     expect(screen.getByText('Send')).toBeOnTheScreen();
-    expect(screen.getByText('ETH - sepolia')).toBeOnTheScreen();
+    expect(screen.getAllByText('SOL').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('USD Coin')).toBeOnTheScreen();
   });
 
@@ -88,7 +88,7 @@ describe('DashboardScreen', () => {
 
     await user.press(screen.getByRole('tab', { name: 'Watchlist' }));
 
-    expect(screen.queryByText('ETH - sepolia')).toBeNull();
+    expect(screen.queryByText('SOL')).toBeNull();
     expect(screen.getByText('Microsoft')).toBeOnTheScreen();
   });
 
