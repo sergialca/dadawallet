@@ -1,17 +1,13 @@
 import { useEffect, useState } from 'react';
-import { createPublicClient, erc20Abi, formatEther, formatUnits, getAddress, http } from 'viem';
 
-import { SepoliaUsdcAddress, WalletChain } from '@/constants/tokens';
-import { useEvmWallet } from '@/hooks/use-evm-wallet';
-
-const publicClient = createPublicClient({
-  chain: WalletChain,
-  transport: http(),
-});
+import { SolanaUsdcDecimals, SolanaUsdcMint } from '@/constants/tokens';
+import { useSolanaWallet } from '@/hooks/use-solana-wallet';
+import { formatAmount } from '@/lib/format-amount';
+import { getSolanaBalanceLamports, getSplTokenBalance, LamportsPerSol } from '@/lib/solana-rpc';
 
 export type WalletAsset = {
   amountLabel: string;
-  icon: 'eth' | 'usdc';
+  icon: 'sol' | 'usdc';
   id: string;
   name: string;
   symbol: string;
@@ -31,39 +27,36 @@ function formatUsd(value: number) {
   return `$${formatAmount(value.toString(), 2)}`;
 }
 
-function formatAmount(value: string, maxFractionDigits: number) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) {
-    return value;
-  }
-
-  const [whole, fraction = ''] = numeric.toFixed(maxFractionDigits).split('.');
-  const groupedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  const trimmedFraction = fraction.replace(/0+$/, '');
-
-  return trimmedFraction.length > 0 ? `${groupedWhole}.${trimmedFraction}` : groupedWhole;
+function formatTokenAmount(raw: bigint, decimals: number) {
+  const negative = raw < 0n;
+  const absolute = negative ? -raw : raw;
+  const padded = absolute.toString().padStart(decimals + 1, '0');
+  const whole = padded.slice(0, padded.length - decimals);
+  const fraction = padded.slice(padded.length - decimals).replace(/0+$/, '');
+  const amount = fraction.length > 0 ? `${whole}.${fraction}` : whole;
+  return negative ? `-${amount}` : amount;
 }
 
-async function fetchEthUsdPrice() {
+async function fetchSolUsdPrice() {
   const response = await fetch(
-    'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
+    'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
   );
 
   if (!response.ok) {
     return null;
   }
 
-  const payload = (await response.json()) as { ethereum?: { usd?: number } };
-  return typeof payload.ethereum?.usd === 'number' ? payload.ethereum.usd : null;
+  const payload = (await response.json()) as { solana?: { usd?: number } };
+  return typeof payload.solana?.usd === 'number' ? payload.solana.usd : null;
 }
 
 export function useWalletBalances(): WalletBalances {
-  const { address, error: walletError, isLoading: walletLoading } = useEvmWallet();
+  const { address, error: walletError, isLoading: walletLoading } = useSolanaWallet();
   const [assets, setAssets] = useState<WalletAsset[]>([]);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [totalUsd, setTotalUsd] = useState<number | null>(null);
-  const [ethAmountLabel, setEthAmountLabel] = useState('—');
+  const [solAmountLabel, setSolAmountLabel] = useState('—');
 
   useEffect(() => {
     if (walletLoading) {
@@ -74,7 +67,7 @@ export function useWalletBalances(): WalletBalances {
     if (!address) {
       setAssets([]);
       setTotalUsd(null);
-      setEthAmountLabel('—');
+      setSolAmountLabel('—');
       setError(walletError);
       setIsLoading(false);
       return;
@@ -82,43 +75,38 @@ export function useWalletBalances(): WalletBalances {
 
     let cancelled = false;
 
-    async function loadBalances(rawAddress: string) {
+    async function loadBalances(walletAddress: string) {
       setIsLoading(true);
       setError(null);
 
       try {
-        const walletAddress = getAddress(rawAddress);
-        const [ethWei, usdcRaw, ethUsd] = await Promise.all([
-          publicClient.getBalance({ address: walletAddress }),
-          publicClient
-            .readContract({
-              abi: erc20Abi,
-              address: SepoliaUsdcAddress,
-              args: [walletAddress],
-              functionName: 'balanceOf',
-            })
-            .catch(() => 0n),
-          fetchEthUsdPrice().catch(() => null),
+        const [lamports, usdc, solUsd] = await Promise.all([
+          getSolanaBalanceLamports(walletAddress),
+          getSplTokenBalance(walletAddress, SolanaUsdcMint).catch(() => ({
+            decimals: SolanaUsdcDecimals,
+            raw: 0n,
+          })),
+          fetchSolUsdPrice().catch(() => null),
         ]);
 
         if (cancelled) {
           return;
         }
 
-        const ethAmount = formatEther(ethWei);
-        const usdcAmount = formatUnits(usdcRaw, 6);
-        const ethUsdValue = ethUsd == null ? null : Number(ethAmount) * ethUsd;
+        const solAmount = formatTokenAmount(BigInt(lamports), 9);
+        const usdcAmount = formatTokenAmount(usdc.raw, usdc.decimals);
+        const solUsdValue = solUsd == null ? null : (lamports / LamportsPerSol) * solUsd;
         const usdcUsdValue = Number(usdcAmount);
 
         setAssets([
           {
-            id: 'eth',
-            icon: 'eth',
-            name: 'ETH - sepolia',
-            symbol: 'ETH',
-            amountLabel: `${formatAmount(ethAmount, 6)} ETH`,
-            usdValue: ethUsdValue,
-            usdLabel: ethUsdValue == null ? '—' : formatUsd(ethUsdValue),
+            id: 'sol',
+            icon: 'sol',
+            name: 'SOL',
+            symbol: 'SOL',
+            amountLabel: `${formatAmount(solAmount, 6)} SOL`,
+            usdValue: solUsdValue,
+            usdLabel: solUsdValue == null ? '—' : formatUsd(solUsdValue),
           },
           {
             id: 'usdc',
@@ -130,13 +118,13 @@ export function useWalletBalances(): WalletBalances {
             usdLabel: formatUsd(usdcUsdValue),
           },
         ]);
-        setTotalUsd(ethUsdValue == null ? null : ethUsdValue + usdcUsdValue);
-        setEthAmountLabel(`${formatAmount(ethAmount, 6)} ETH`);
+        setTotalUsd(solUsdValue == null ? null : solUsdValue + usdcUsdValue);
+        setSolAmountLabel(`${formatAmount(solAmount, 6)} SOL`);
       } catch (caught) {
         if (!cancelled) {
           setAssets([]);
           setTotalUsd(null);
-          setEthAmountLabel('—');
+          setSolAmountLabel('—');
           setError(caught instanceof Error ? caught : new Error('Could not load wallet balances.'));
         }
       } finally {
@@ -158,6 +146,6 @@ export function useWalletBalances(): WalletBalances {
     error,
     isLoading,
     totalUsd,
-    totalUsdLabel: totalUsd == null ? ethAmountLabel : formatUsd(totalUsd),
+    totalUsdLabel: totalUsd == null ? solAmountLabel : formatUsd(totalUsd),
   };
 }

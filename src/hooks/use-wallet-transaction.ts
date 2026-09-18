@@ -1,41 +1,48 @@
-import { type Address, type Hex } from 'viem';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 
-import { useEvmWallet } from '@/hooks/use-evm-wallet';
+import { useSolanaWallet } from '@/hooks/use-solana-wallet';
+import { getSolanaConnection } from '@/lib/solana-connection';
 
-type TransactionInput = {
-  chainId?: number;
-  data: Hex;
-  to: Address;
+type SolanaTransferInput = {
+  lamports: number;
+  to: string;
 };
 
-export function useWalletTransaction() {
-  const { address, wallet } = useEvmWallet();
 
-  async function sendTransaction({ chainId, data, to }: TransactionInput) {
+export function useWalletTransaction() {
+  const { address, wallet } = useSolanaWallet();
+
+  async function sendTransaction(input: SolanaTransferInput) {
     if (!wallet || !address) {
       throw new Error('Wallet is not ready.');
     }
 
-    const provider = await wallet.getProvider();
-    await provider.request({ method: 'eth_requestAccounts' });
-
-    if (chainId) {
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: `0x${chainId.toString(16)}` }],
-      });
+    if (!('lamports' in input)) {
+      throw new Error('This wallet is on Solana. Ethereum contract calls are not available.');
     }
 
-    return (await provider.request({
-      method: 'eth_sendTransaction',
-      params: [
-        {
-          from: address,
-          to,
-          data,
-        },
-      ],
-    })) as Hex;
+    const connection = getSolanaConnection();
+    const fromPubkey = new PublicKey(address);
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey,
+        lamports: input.lamports,
+        toPubkey: new PublicKey(input.to),
+      }),
+    );
+    transaction.feePayer = fromPubkey;
+    transaction.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+    const provider = await wallet.getProvider();
+    const { signature } = await provider.request({
+      method: 'signAndSendTransaction',
+      params: {
+        connection,
+        transaction,
+      },
+    });
+
+    return signature;
   }
 
   return {

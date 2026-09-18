@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
-import { createPublicClient, erc20Abi, formatUnits, getAddress, http } from 'viem';
 
-import { SepoliaUsdcAddress, WalletChain } from '@/constants/tokens';
-import { useEvmWallet } from '@/hooks/use-evm-wallet';
+import { SolanaUsdcDecimals, SolanaUsdcMint } from '@/constants/tokens';
+import { useSolanaWallet } from '@/hooks/use-solana-wallet';
+import { getSplTokenBalance } from '@/lib/solana-rpc';
 
-const publicClient = createPublicClient({
-  chain: WalletChain,
-  transport: http(),
-});
+function toUiAmount(raw: bigint, decimals: number) {
+  const negative = raw < 0n;
+  const absolute = negative ? -raw : raw;
+  const padded = absolute.toString().padStart(decimals + 1, '0');
+  const whole = padded.slice(0, padded.length - decimals);
+  const fraction = padded.slice(padded.length - decimals);
+  const amount = Number(`${whole}.${fraction}`);
+  return negative ? -amount : amount;
+}
 
 export function useUsdcBalance() {
-  const { address, error: walletError, isLoading: walletLoading } = useEvmWallet();
+  const { address, error: walletError, isLoading: walletLoading } = useSolanaWallet();
   const [balance, setBalance] = useState(0);
   const [rawBalance, setRawBalance] = useState(0n);
   const [error, setError] = useState<Error | null>(null);
@@ -29,15 +34,9 @@ export function useUsdcBalance() {
     setError(null);
 
     try {
-      const walletAddress = getAddress(address);
-      const raw = await publicClient.readContract({
-        abi: erc20Abi,
-        address: SepoliaUsdcAddress,
-        args: [walletAddress],
-        functionName: 'balanceOf',
-      });
-      setRawBalance(raw);
-      setBalance(Number(formatUnits(raw, 6)));
+      const token = await getSplTokenBalance(address, SolanaUsdcMint);
+      setRawBalance(token.raw);
+      setBalance(toUiAmount(token.raw, token.decimals || SolanaUsdcDecimals));
     } catch (caught) {
       setBalance(0);
       setRawBalance(0n);

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getAddress } from 'viem';
 
-import { useEvmWallet } from '@/hooks/use-evm-wallet';
-import { fetchWalletTransfers, type WalletTransfer } from '@/lib/alchemy-transfers';
+import { useSolanaWallet } from '@/hooks/use-solana-wallet';
+import { fetchWalletTransfers, type WalletTransfer } from '@/lib/solana-transfers';
 
 export type WalletActivity = {
   error: Error | null;
@@ -11,7 +10,7 @@ export type WalletActivity = {
 };
 
 export function useWalletActivity(): WalletActivity {
-  const { address, error: walletError, isLoading: walletLoading } = useEvmWallet();
+  const { address, error: walletError, isLoading: walletLoading } = useSolanaWallet();
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [transfers, setTransfers] = useState<WalletTransfer[]>([]);
@@ -31,12 +30,12 @@ export function useWalletActivity(): WalletActivity {
 
     let cancelled = false;
 
-    async function loadTransfers(rawAddress: string) {
+    async function loadTransfers(walletAddress: string) {
       setIsLoading(true);
       setError(null);
 
       try {
-        const nextTransfers = await fetchWalletTransfers(getAddress(rawAddress));
+        const nextTransfers = await fetchWalletTransfers(walletAddress);
         if (!cancelled) {
           setTransfers(nextTransfers);
         }
