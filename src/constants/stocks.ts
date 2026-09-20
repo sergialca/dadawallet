@@ -22,6 +22,7 @@ export const stockCatalog: StockCatalog = {
         'Designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.',
       logoUrl: 'https://assets.parqet.com/logos/symbol/AAPL?format=png',
       isAvailable: true,
+      kind: 'stock',
     },
     {
       id: 'msft-ondo',
@@ -35,6 +36,7 @@ export const stockCatalog: StockCatalog = {
         'Develops and supports software, services, devices and cloud solutions including Azure, Windows, and Office.',
       logoUrl: 'https://assets.parqet.com/logos/symbol/MSFT?format=png',
       isAvailable: true,
+      kind: 'stock',
     },
     {
       id: 'nvda-ondo',
@@ -48,6 +50,7 @@ export const stockCatalog: StockCatalog = {
         'Pioneer of GPU computing and leading infrastructure provider for artificial intelligence and accelerated computing.',
       logoUrl: 'https://assets.parqet.com/logos/symbol/NVDA?format=png',
       isAvailable: true,
+      kind: 'stock',
     },
     {
       id: 'amzn-ondo',
@@ -61,6 +64,7 @@ export const stockCatalog: StockCatalog = {
         'Global e-commerce marketplace, cloud computing provider via AWS, digital streaming, and logistics leader.',
       logoUrl: 'https://assets.parqet.com/logos/symbol/AMZN?format=png',
       isAvailable: true,
+      kind: 'stock',
     },
     {
       id: 'googl-ondo',
@@ -74,6 +78,7 @@ export const stockCatalog: StockCatalog = {
         'Holding company for Google Search, YouTube, Android, Google Cloud, and DeepMind artificial intelligence ventures.',
       logoUrl: 'https://assets.parqet.com/logos/symbol/GOOGL?format=png',
       isAvailable: true,
+      kind: 'stock',
     },
     {
       id: 'meta-ondo',
@@ -87,6 +92,7 @@ export const stockCatalog: StockCatalog = {
         'Connects billions of people across Facebook, Instagram, WhatsApp, Messenger, and develops next-generation spatial computing.',
       logoUrl: 'https://assets.parqet.com/logos/symbol/META?format=png',
       isAvailable: true,
+      kind: 'stock',
     },
     {
       id: 'tsla-ondo',
@@ -100,6 +106,35 @@ export const stockCatalog: StockCatalog = {
         'Designs, manufactures, and sells electric vehicles, energy storage systems, solar panels, and autonomous driving tech.',
       logoUrl: 'https://assets.parqet.com/logos/symbol/TSLA?format=png',
       isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'openai-tessera',
+      ticker: 'tOpenAI',
+      name: 'OpenAI',
+      tokenSymbol: 'tOpenAI',
+      contractAddress: 'oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ',
+      decimals: 9,
+      category: 'Artificial Intelligence',
+      description:
+        'Tessera T-token for tokenized pre-IPO economic exposure to OpenAI. Not equity and not an Ondo Global Markets stock.',
+      logoUrl: 'https://logo.clearbit.com/openai.com',
+      isAvailable: true,
+      kind: 'pre-IPO stock',
+    },
+    {
+      id: 'kalshi-tessera',
+      ticker: 'tKalshi',
+      name: 'Kalshi',
+      tokenSymbol: 'tKalshi',
+      contractAddress: 'TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ',
+      decimals: 9,
+      category: 'Prediction Markets',
+      description:
+        'Tessera T-token for tokenized pre-IPO economic exposure to Kalshi. Not equity and not an Ondo Global Markets stock.',
+      logoUrl: 'https://logo.clearbit.com/kalshi.com',
+      isAvailable: true,
+      kind: 'pre-IPO stock',
     },
   ],
 };

@@ -1,5 +1,5 @@
 import { listedStocks } from '@/constants/stocks';
-import { filterStocks, groupStocksByNameLetter } from '@/lib/stock-list';
+import { filterStocks, filterStocksByKind, groupStocksByNameLetter } from '@/lib/stock-list';
 import type { StockAsset } from '@/types/stocks';
 
 function stock(overrides: Partial<StockAsset> & Pick<StockAsset, 'id' | 'name' | 'ticker'>): StockAsset {
@@ -11,6 +11,7 @@ function stock(overrides: Partial<StockAsset> & Pick<StockAsset, 'id' | 'name' |
     description: 'Test stock',
     logoUrl: 'https://example.com/logo.png',
     isAvailable: true,
+    kind: 'stock',
     ...overrides,
   };
 }
@@ -27,14 +28,33 @@ describe('filterStocks', () => {
   test('returns the full list when the query is blank', () => {
     expect(filterStocks(listedStocks, '   ')).toEqual(listedStocks);
   });
+
+  test('marks Tessera names as pre-IPO stock', () => {
+    const openai = listedStocks.find((item) => item.id === 'openai-tessera');
+    expect(openai?.kind).toBe('pre-IPO stock');
+    expect(listedStocks.filter((item) => item.kind === 'stock').every((item) => item.id.endsWith('-ondo'))).toBe(
+      true
+    );
+  });
+});
+
+describe('filterStocksByKind', () => {
+  test('keeps every asset for all, and splits by kind', () => {
+    expect(filterStocksByKind(listedStocks, 'all')).toEqual(listedStocks);
+    expect(filterStocksByKind(listedStocks, 'stock').every((item) => item.kind === 'stock')).toBe(true);
+    expect(
+      filterStocksByKind(listedStocks, 'pre-IPO stock').map((item) => item.ticker)
+    ).toEqual(['tOpenAI', 'tKalshi']);
+  });
 });
 
 describe('groupStocksByNameLetter', () => {
   test('sorts by company name and groups by first letter', () => {
     const sections = groupStocksByNameLetter(listedStocks);
-    expect(sections.map((section) => section.title)).toEqual(['A', 'M', 'N', 'T']);
+    expect(sections.map((section) => section.title)).toEqual(['A', 'K', 'M', 'N', 'O', 'T']);
     expect(sections[0]?.data.map((item) => item.ticker)).toEqual(['GOOGL', 'AMZN', 'AAPL']);
-    expect(sections[1]?.data.map((item) => item.ticker)).toEqual(['META', 'MSFT']);
+    expect(sections[1]?.data.map((item) => item.ticker)).toEqual(['tKalshi']);
+    expect(sections[2]?.data.map((item) => item.ticker)).toEqual(['META', 'MSFT']);
   });
 
   test('puts non-letter names under #', () => {

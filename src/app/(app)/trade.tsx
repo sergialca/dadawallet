@@ -18,8 +18,20 @@ import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
 import { listedStocks, stockCatalog } from '@/constants/stocks';
 import { MaxContentWidth } from '@/constants/theme';
-import { ALPHABET, filterStocks, groupStocksByNameLetter } from '@/lib/stock-list';
+import {
+  ALPHABET,
+  filterStocks,
+  filterStocksByKind,
+  groupStocksByNameLetter,
+  type StockListFilter,
+} from '@/lib/stock-list';
 import type { StockAsset } from '@/types/stocks';
+
+const LIST_FILTERS: { id: StockListFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'stock', label: 'Stocks' },
+  { id: 'pre-IPO stock', label: 'Pre-IPO' },
+];
 
 function SearchIcon() {
   return (
@@ -73,10 +85,12 @@ export default function TradeScreen() {
   const pathname = usePathname();
   const listRef = useRef<SectionListType<StockAsset>>(null);
   const [query, setQuery] = useState('');
+  const [listFilter, setListFilter] = useState<StockListFilter>('all');
 
   const sections = useMemo(
-    () => groupStocksByNameLetter(filterStocks(listedStocks, query)),
-    [query]
+    () =>
+      groupStocksByNameLetter(filterStocks(filterStocksByKind(listedStocks, listFilter), query)),
+    [listFilter, query]
   );
   const populatedLetters = useMemo(
     () => new Set(sections.map((section) => section.title)),
@@ -106,6 +120,28 @@ export default function TradeScreen() {
             style={styles.searchInput}
             value={query}
           />
+        </View>
+
+        <View style={styles.filterRow}>
+          {LIST_FILTERS.map((filter) => {
+            const selected = listFilter === filter.id;
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                key={filter.id}
+                onPress={() => {
+                  setListFilter(filter.id);
+                }}
+                style={[styles.filterChip, selected && styles.filterChipSelected]}
+              >
+                {selected ? <View style={styles.filterDot} /> : null}
+                <ThemedText style={[styles.filterLabel, selected && styles.filterLabelSelected]}>
+                  {filter.label}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
         </View>
 
         <View style={styles.listWrap}>
@@ -213,6 +249,43 @@ const styles = StyleSheet.create({
     color: Design.colors.onSurface,
     flex: 1,
     padding: 0,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Design.space.sm,
+    marginHorizontal: Design.space.container,
+    marginTop: Design.space.md,
+  },
+  filterChip: {
+    alignItems: 'center',
+    borderColor: Design.colors.outlineVariant,
+    borderRadius: Design.radius.full,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  filterChipSelected: {
+    backgroundColor: Design.colors.primaryContainer,
+    borderColor: Design.colors.primaryContainer,
+  },
+  filterDot: {
+    backgroundColor: Design.colors.onPrimary,
+    borderRadius: Design.radius.full,
+    height: 6,
+    width: 6,
+  },
+  filterLabel: {
+    ...DesignType.bodyMd,
+    color: Design.colors.onSurfaceVariant,
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  filterLabelSelected: {
+    color: Design.colors.onPrimary,
   },
   listWrap: {
     flex: 1,

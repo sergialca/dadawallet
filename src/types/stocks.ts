@@ -6,17 +6,20 @@ export interface SettlementToken {
   decimals: number;
 }
 
+export type StockKind = 'stock' | 'pre-IPO stock';
+
 export interface StockAsset {
   id: string;
   ticker: string;
   name: string;
   tokenSymbol: string;
-  contractAddress: Address;
+  contractAddress: string;
   decimals: number;
   category: string;
   description: string;
   logoUrl: string;
   isAvailable: boolean;
+  kind: StockKind;
 }
 
 export interface StockCatalog {
