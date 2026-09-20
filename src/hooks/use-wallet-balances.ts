@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { SolanaUsdcDecimals, SolanaUsdcMint } from '@/constants/tokens';
 import { useSolanaWallet } from '@/hooks/use-solana-wallet';
@@ -19,6 +19,8 @@ export type WalletBalances = {
   assets: WalletAsset[];
   error: Error | null;
   isLoading: boolean;
+  isRefreshing: boolean;
+  refresh: () => Promise<void>;
   totalUsd: number | null;
   totalUsdLabel: string;
 };
@@ -50,13 +52,86 @@ async function fetchSolUsdPrice() {
   return typeof payload.solana?.usd === 'number' ? payload.solana.usd : null;
 }
 
+async function fetchWalletAssets(walletAddress: string) {
+  const [lamports, usdc, solUsd] = await Promise.all([
+    getSolanaBalanceLamports(walletAddress),
+    getSplTokenBalance(walletAddress, SolanaUsdcMint).catch(() => ({
+      decimals: SolanaUsdcDecimals,
+      raw: 0n,
+    })),
+    fetchSolUsdPrice().catch(() => null),
+  ]);
+
+  const solAmount = formatTokenAmount(BigInt(lamports), 9);
+  const usdcAmount = formatTokenAmount(usdc.raw, usdc.decimals);
+  const solUsdValue = solUsd == null ? null : (lamports / LamportsPerSol) * solUsd;
+  const usdcUsdValue = Number(usdcAmount);
+
+  return {
+    assets: [
+      {
+        id: 'sol' as const,
+        icon: 'sol' as const,
+        name: 'SOL',
+        symbol: 'SOL',
+        amountLabel: `${formatAmount(solAmount, 6)} SOL`,
+        usdValue: solUsdValue,
+        usdLabel: solUsdValue == null ? '—' : formatUsd(solUsdValue),
+      },
+      {
+        id: 'usdc' as const,
+        icon: 'usdc' as const,
+        name: 'USD Coin',
+        symbol: 'USDC',
+        amountLabel: `${formatAmount(usdcAmount, 2)} USDC`,
+        usdValue: usdcUsdValue,
+        usdLabel: formatUsd(usdcUsdValue),
+      },
+    ],
+    solAmountLabel: `${formatAmount(solAmount, 6)} SOL`,
+    totalUsd: solUsdValue == null ? null : solUsdValue + usdcUsdValue,
+  };
+}
+
 export function useWalletBalances(): WalletBalances {
   const { address, error: walletError, isLoading: walletLoading } = useSolanaWallet();
   const [assets, setAssets] = useState<WalletAsset[]>([]);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [totalUsd, setTotalUsd] = useState<number | null>(null);
   const [solAmountLabel, setSolAmountLabel] = useState('—');
+
+  const applyBalances = useCallback((next: Awaited<ReturnType<typeof fetchWalletAssets>>) => {
+    setAssets(next.assets);
+    setTotalUsd(next.totalUsd);
+    setSolAmountLabel(next.solAmountLabel);
+  }, []);
+
+  const refresh = useCallback(async () => {
+    if (walletLoading) {
+      return;
+    }
+
+    if (!address) {
+      setAssets([]);
+      setTotalUsd(null);
+      setSolAmountLabel('—');
+      setError(walletError);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsRefreshing(true);
+    setError(null);
+    try {
+      applyBalances(await fetchWalletAssets(address));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught : new Error('Could not load wallet balances.'));
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [address, applyBalances, walletError, walletLoading]);
 
   useEffect(() => {
     if (walletLoading) {
@@ -75,51 +150,14 @@ export function useWalletBalances(): WalletBalances {
 
     let cancelled = false;
 
-    async function loadBalances(walletAddress: string) {
+    async function loadInitial(walletAddress: string) {
       setIsLoading(true);
       setError(null);
-
       try {
-        const [lamports, usdc, solUsd] = await Promise.all([
-          getSolanaBalanceLamports(walletAddress),
-          getSplTokenBalance(walletAddress, SolanaUsdcMint).catch(() => ({
-            decimals: SolanaUsdcDecimals,
-            raw: 0n,
-          })),
-          fetchSolUsdPrice().catch(() => null),
-        ]);
-
-        if (cancelled) {
-          return;
+        const next = await fetchWalletAssets(walletAddress);
+        if (!cancelled) {
+          applyBalances(next);
         }
-
-        const solAmount = formatTokenAmount(BigInt(lamports), 9);
-        const usdcAmount = formatTokenAmount(usdc.raw, usdc.decimals);
-        const solUsdValue = solUsd == null ? null : (lamports / LamportsPerSol) * solUsd;
-        const usdcUsdValue = Number(usdcAmount);
-
-        setAssets([
-          {
-            id: 'sol',
-            icon: 'sol',
-            name: 'SOL',
-            symbol: 'SOL',
-            amountLabel: `${formatAmount(solAmount, 6)} SOL`,
-            usdValue: solUsdValue,
-            usdLabel: solUsdValue == null ? '—' : formatUsd(solUsdValue),
-          },
-          {
-            id: 'usdc',
-            icon: 'usdc',
-            name: 'USD Coin',
-            symbol: 'USDC',
-            amountLabel: `${formatAmount(usdcAmount, 2)} USDC`,
-            usdValue: usdcUsdValue,
-            usdLabel: formatUsd(usdcUsdValue),
-          },
-        ]);
-        setTotalUsd(solUsdValue == null ? null : solUsdValue + usdcUsdValue);
-        setSolAmountLabel(`${formatAmount(solAmount, 6)} SOL`);
       } catch (caught) {
         if (!cancelled) {
           setAssets([]);
@@ -134,17 +172,19 @@ export function useWalletBalances(): WalletBalances {
       }
     }
 
-    void loadBalances(address);
+    void loadInitial(address);
 
     return () => {
       cancelled = true;
     };
-  }, [address, walletError, walletLoading]);
+  }, [address, applyBalances, walletError, walletLoading]);
 
   return {
     assets,
     error,
     isLoading,
+    isRefreshing,
+    refresh,
     totalUsd,
     totalUsdLabel: totalUsd == null ? solAmountLabel : formatUsd(totalUsd),
   };
