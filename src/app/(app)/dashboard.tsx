@@ -1,6 +1,6 @@
 import { usePathname, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppTabBar } from '@/components/app-tab-bar';
@@ -51,7 +51,7 @@ function AssetIcon({ icon }: { icon: WalletAsset['icon'] }) {
 export default function DashboardScreen() {
   const pathname = usePathname();
   const router = useRouter();
-  const { assets, error, isLoading, totalUsdLabel } = useWalletBalances();
+  const { assets, error, isLoading, isRefreshing, refresh, totalUsdLabel } = useWalletBalances();
   const [listTab, setListTab] = useState<'assets' | 'watchlist'>('assets');
 
   return (
@@ -59,8 +59,20 @@ export default function DashboardScreen() {
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView
           contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl
+              colors={[Design.colors.primaryContainer]}
+              onRefresh={() => {
+                void refresh();
+              }}
+              progressBackgroundColor={Design.colors.surfaceContainer}
+              refreshing={isRefreshing}
+              tintColor={Design.colors.primaryContainer}
+            />
+          }
           showsVerticalScrollIndicator={false}
           style={styles.scroll}
+          testID="dashboard-scroll"
         >
           <View style={styles.header}>
             <View style={styles.brand}>
@@ -144,13 +156,13 @@ export default function DashboardScreen() {
               </View>
             ) : null}
 
-            {listTab === 'assets' && !isLoading && error ? (
+            {listTab === 'assets' && !isLoading && error && assets.length === 0 ? (
               <View style={styles.assetRow}>
                 <ThemedText style={styles.balanceError}>{error.message}</ThemedText>
               </View>
             ) : null}
 
-            {listTab === 'assets' && !isLoading && !error
+            {listTab === 'assets' && !isLoading && assets.length > 0
               ? assets.map((asset) => (
                   <View key={asset.id} style={styles.assetRow}>
                     <AssetIcon icon={asset.icon} />

@@ -1,0 +1,1 @@
+This feature specifies the implementation of a native Pull-to-Refresh (PTR) gesture for (app)/dashboard.tsx in this Expo app. When a user drag the screen down and the user is at the top of  view ($y = 0$), past a defined threshold, an activity indicator appears and triggers a data reload.
