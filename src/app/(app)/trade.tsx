@@ -1,7 +1,16 @@
 import { Image } from 'expo-image';
 import { usePathname, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import {
+  Pressable,
+  SectionList,
+  StyleSheet,
+  TextInput,
+  View,
+  type SectionList as SectionListType,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 import { AppTabBar } from '@/components/app-tab-bar';
 import { HexLogo } from '@/components/dashboard-icons';
@@ -9,7 +18,29 @@ import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
 import { listedStocks, stockCatalog } from '@/constants/stocks';
 import { MaxContentWidth } from '@/constants/theme';
+import { ALPHABET, filterStocks, groupStocksByNameLetter } from '@/lib/stock-list';
 import type { StockAsset } from '@/types/stocks';
+
+function SearchIcon() {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 16 16">
+      <Circle
+        cx="7"
+        cy="7"
+        r="4.5"
+        fill="none"
+        stroke={Design.colors.outline}
+        strokeWidth="1.4"
+      />
+      <Path
+        d="M10.5 10.5 14 14"
+        fill="none"
+        stroke={Design.colors.outline}
+        strokeWidth="1.4"
+      />
+    </Svg>
+  );
+}
 
 function StockRow({ stock }: { stock: StockAsset }) {
   const router = useRouter();
@@ -40,29 +71,91 @@ function StockRow({ stock }: { stock: StockAsset }) {
 
 export default function TradeScreen() {
   const pathname = usePathname();
+  const listRef = useRef<SectionListType<StockAsset>>(null);
+  const [query, setQuery] = useState('');
+
+  const sections = useMemo(
+    () => groupStocksByNameLetter(filterStocks(listedStocks, query)),
+    [query]
+  );
+  const populatedLetters = useMemo(
+    () => new Set(sections.map((section) => section.title)),
+    [sections]
+  );
 
   return (
     <View style={styles.screen}>
       <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          style={styles.scroll}
-        >
-          <View style={styles.header}>
-            <HexLogo />
-            <View>
-              <ThemedText style={styles.networkLabel}>{stockCatalog.provider}</ThemedText>
-              <ThemedText style={styles.headline}>Trade</ThemedText>
-            </View>
+        <View style={styles.header}>
+          <HexLogo />
+          <View>
+            <ThemedText style={styles.networkLabel}>{stockCatalog.provider}</ThemedText>
+            <ThemedText style={styles.headline}>Trade</ThemedText>
           </View>
+        </View>
 
-          <View style={styles.stockList}>
-            {listedStocks.map((stock) => (
-              <StockRow key={stock.id} stock={stock} />
-            ))}
+        <View style={styles.searchWrap}>
+          <SearchIcon />
+          <TextInput
+            accessibilityLabel="Search stocks"
+            autoCapitalize="none"
+            autoCorrect={false}
+            onChangeText={setQuery}
+            placeholder="Search asset, ticker (e.g., AAPL, NVDA)"
+            placeholderTextColor={Design.colors.outline}
+            style={styles.searchInput}
+            value={query}
+          />
+        </View>
+
+        <View style={styles.listWrap}>
+          <SectionList
+            ref={listRef}
+            contentContainerStyle={styles.listContent}
+            keyExtractor={(stock) => stock.id}
+            ListEmptyComponent={
+              <ThemedText style={styles.emptyText}>No matching stocks</ThemedText>
+            }
+            renderItem={({ item }) => <StockRow stock={item} />}
+            renderSectionHeader={({ section }) => (
+              <ThemedText style={styles.sectionHeader}>{section.title}</ThemedText>
+            )}
+            sections={sections}
+            showsVerticalScrollIndicator={false}
+            stickySectionHeadersEnabled
+            style={styles.list}
+          />
+
+          <View pointerEvents="box-none" style={styles.letterRail}>
+            {ALPHABET.map((letter) => {
+              const enabled = populatedLetters.has(letter);
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: !enabled }}
+                  disabled={!enabled}
+                  key={letter}
+                  onPress={() => {
+                    const sectionIndex = sections.findIndex((section) => section.title === letter);
+                    if (sectionIndex < 0) {
+                      return;
+                    }
+                    listRef.current?.scrollToLocation({
+                      animated: true,
+                      itemIndex: 0,
+                      sectionIndex,
+                      viewPosition: 0,
+                    });
+                  }}
+                >
+                  <ThemedText style={[styles.railLetter, enabled && styles.railLetterActive]}>
+                    {letter}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
           </View>
-        </ScrollView>
+        </View>
 
         <View style={styles.debug}>
           <ThemedText style={styles.debugText}>Screen: src/app/(app)/trade.tsx</ThemedText>
@@ -87,19 +180,12 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     width: '100%',
   },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    gap: Design.space.md,
-    paddingBottom: Design.space.md,
-    paddingHorizontal: Design.space.container,
-    paddingTop: Design.space.sm,
-  },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: Design.space.sm,
+    paddingHorizontal: Design.space.container,
+    paddingTop: Design.space.sm,
   },
   networkLabel: {
     ...DesignType.labelCaps,
@@ -109,14 +195,50 @@ const styles = StyleSheet.create({
     ...DesignType.headlineMd,
     color: Design.colors.onSurface,
   },
-  stockList: {
+  searchWrap: {
+    alignItems: 'center',
+    backgroundColor: Design.colors.surfaceContainerLow,
+    borderColor: Design.colors.outlineVariant,
+    borderRadius: Design.radius.full,
+    borderWidth: 1,
+    flexDirection: 'row',
     gap: Design.space.sm,
+    marginHorizontal: Design.space.container,
+    marginTop: Design.space.md,
+    paddingHorizontal: Design.space.md,
+    paddingVertical: 10,
+  },
+  searchInput: {
+    ...DesignType.bodyMd,
+    color: Design.colors.onSurface,
+    flex: 1,
+    padding: 0,
+  },
+  listWrap: {
+    flex: 1,
+    marginTop: Design.space.md,
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    gap: Design.space.sm,
+    paddingBottom: Design.space.md,
+    paddingLeft: Design.space.container,
+    paddingRight: 36,
+  },
+  sectionHeader: {
+    ...DesignType.bodyMd,
+    backgroundColor: Design.colors.background,
+    color: Design.colors.primaryContainer,
+    fontWeight: '600',
+    paddingVertical: 4,
   },
   stockRow: {
     alignItems: 'center',
     backgroundColor: Design.colors.surfaceContainer,
     borderColor: Design.colors.outlineVariant,
-    borderRadius: Design.radius.lg,
+    borderRadius: Design.radius.xl,
     borderWidth: 1,
     flexDirection: 'row',
     gap: Design.space.md,
@@ -147,6 +269,30 @@ const styles = StyleSheet.create({
   stockTicker: {
     ...DesignType.dataSm,
     color: Design.colors.onSurfaceVariant,
+  },
+  emptyText: {
+    ...DesignType.bodyMd,
+    color: Design.colors.onSurfaceVariant,
+    paddingTop: Design.space.md,
+  },
+  letterRail: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 6,
+    top: 0,
+    width: 16,
+  },
+  railLetter: {
+    color: Design.colors.outlineVariant,
+    fontSize: 10,
+    fontWeight: '600',
+    lineHeight: 13,
+    textAlign: 'center',
+  },
+  railLetterActive: {
+    color: Design.colors.primaryContainer,
   },
   debug: {
     paddingHorizontal: Design.space.container,
