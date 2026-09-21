@@ -28,8 +28,27 @@ describe('TradeScreen', () => {
 
     expect(screen.getByText('Alphabet Inc.')).toBeOnTheScreen();
     expect(screen.getByText('Apple Inc.')).toBeOnTheScreen();
+    expect(screen.getByText('Aurora Innovation, Inc.')).toBeOnTheScreen();
+    expect(screen.getByText('AUR')).toBeOnTheScreen();
     expect(screen.getAllByText('A').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('M').length).toBeGreaterThanOrEqual(1);
+  });
+
+  test('filters the list with All, Stocks, and Pre-IPO chips', async () => {
+    const user = userEvent.setup();
+    await render(<TradeScreen />);
+
+    await user.press(screen.getByText('Stocks'));
+    expect(screen.getByText('Apple Inc.')).toBeOnTheScreen();
+    expect(screen.queryByText('Kalshi')).toBeNull();
+
+    await user.press(screen.getByText('Pre-IPO'));
+    expect(screen.getByText('Kalshi')).toBeOnTheScreen();
+    expect(screen.queryByText('Apple Inc.')).toBeNull();
+
+    await user.press(screen.getByText('All'));
+    expect(screen.getByText('Apple Inc.')).toBeOnTheScreen();
+    expect(screen.getByText('Aurora Innovation, Inc.')).toBeOnTheScreen();
   });
 
   test('filters the list from the search field', async () => {

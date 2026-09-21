@@ -1,4 +1,6 @@
-import type { StockAsset } from '@/types/stocks';
+import type { StockAsset, StockKind } from '@/types/stocks';
+
+export type StockListFilter = 'all' | StockKind;
 
 export const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -20,6 +22,14 @@ export function filterStocks(stocks: StockAsset[], query: string): StockAsset[] 
       stock.tokenSymbol.toLowerCase().includes(needle)
     );
   });
+}
+
+export function filterStocksByKind(stocks: StockAsset[], filter: StockListFilter): StockAsset[] {
+  if (filter === 'all') {
+    return stocks;
+  }
+
+  return stocks.filter((stock) => stock.kind === filter);
 }
 
 function sectionTitleForName(name: string): string {
