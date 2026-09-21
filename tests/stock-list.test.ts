@@ -51,10 +51,21 @@ describe('filterStocksByKind', () => {
 describe('groupStocksByNameLetter', () => {
   test('sorts by company name and groups by first letter', () => {
     const sections = groupStocksByNameLetter(listedStocks);
-    expect(sections.map((section) => section.title)).toEqual(['A', 'K', 'M', 'N', 'O', 'T']);
-    expect(sections[0]?.data.map((item) => item.ticker)).toEqual(['GOOGL', 'AMZN', 'AAPL']);
-    expect(sections[1]?.data.map((item) => item.ticker)).toEqual(['tKalshi']);
-    expect(sections[2]?.data.map((item) => item.ticker)).toEqual(['META', 'MSFT']);
+    expect(sections.map((section) => section.title)).toEqual([
+      'A',
+      'C',
+      'I',
+      'K',
+      'M',
+      'N',
+      'O',
+      'R',
+      'S',
+      'T',
+    ]);
+    expect(sections[0]?.data.map((item) => item.ticker)).toEqual(['GOOGL', 'AMZN', 'AAPL', 'AUR']);
+    expect(sections[1]?.data.map((item) => item.ticker)).toEqual(['COIN']);
+    expect(sections[4]?.data.map((item) => item.ticker)).toEqual(['META', 'MSFT', 'MSTR']);
   });
 
   test('puts non-letter names under #', () => {

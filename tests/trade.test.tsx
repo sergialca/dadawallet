@@ -28,8 +28,8 @@ describe('TradeScreen', () => {
 
     expect(screen.getByText('Alphabet Inc.')).toBeOnTheScreen();
     expect(screen.getByText('Apple Inc.')).toBeOnTheScreen();
-    expect(screen.getByText('Kalshi')).toBeOnTheScreen();
-    expect(screen.getByText('tKalshi')).toBeOnTheScreen();
+    expect(screen.getByText('Aurora Innovation, Inc.')).toBeOnTheScreen();
+    expect(screen.getByText('AUR')).toBeOnTheScreen();
     expect(screen.getAllByText('A').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('M').length).toBeGreaterThanOrEqual(1);
   });
@@ -48,7 +48,7 @@ describe('TradeScreen', () => {
 
     await user.press(screen.getByText('All'));
     expect(screen.getByText('Apple Inc.')).toBeOnTheScreen();
-    expect(screen.getByText('Kalshi')).toBeOnTheScreen();
+    expect(screen.getByText('Aurora Innovation, Inc.')).toBeOnTheScreen();
   });
 
   test('filters the list from the search field', async () => {
