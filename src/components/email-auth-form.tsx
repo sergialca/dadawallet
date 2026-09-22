@@ -1,11 +1,9 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Design, DesignType } from '@/constants/design';
 import { useLoginWithEmail } from '@privy-io/expo';
 
 type EmailAuthMode = 'login' | 'signup';
@@ -19,12 +17,12 @@ function isValidEmail(email: string) {
 }
 
 export function EmailAuthForm({ mode }: EmailAuthFormProps) {
-  const theme = useTheme();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasSentPassword, setHasSentPassword] = useState(false);
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
   const { sendCode, loginWithCode, state } = useLoginWithEmail();
 
   const isSending = state.status === 'sending-code';
@@ -90,23 +88,27 @@ export function EmailAuthForm({ mode }: EmailAuthFormProps) {
   }
 
   return (
-    <ThemedView style={styles.form}>
-      <ThemedText type="small" themeColor="textSecondary">
-        Enter a valid email, then send a one-time password.
-      </ThemedText>
-
-      <TextInput
-        autoCapitalize="none"
-        autoComplete="email"
-        autoCorrect={false}
-        keyboardType="email-address"
-        onChangeText={onEmailChange}
-        placeholder="Email"
-        placeholderTextColor={theme.textSecondary}
-        style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
-        textContentType="emailAddress"
-        value={email}
-      />
+    <View style={styles.form}>
+      <View style={styles.field}>
+        <ThemedText style={styles.label}>Email</ThemedText>
+        <TextInput
+          autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
+          keyboardType="email-address"
+          onBlur={() => setFocusedField(null)}
+          onChangeText={onEmailChange}
+          onFocus={() => setFocusedField('email')}
+          placeholder="Email"
+          placeholderTextColor={Design.colors.outline}
+          style={[
+            styles.input,
+            focusedField === 'email' && styles.inputFocused,
+          ]}
+          textContentType="emailAddress"
+          value={email}
+        />
+      </View>
 
       <Pressable
         accessibilityRole="button"
@@ -115,40 +117,44 @@ export function EmailAuthForm({ mode }: EmailAuthFormProps) {
           void onSendCode();
         }}
         style={({ pressed }) => [
-          styles.button,
+          styles.secondaryButton,
           {
-            backgroundColor: theme.backgroundSelected,
-            opacity: !canSendCode ? 0.5 : pressed ? 0.8 : 1,
+            opacity: !canSendCode ? 0.5 : pressed ? 0.85 : 1,
           },
+          pressed && canSendCode ? styles.neonBloom : null,
         ]}
       >
         {isSending ? (
-          <ActivityIndicator color={theme.text} />
+          <ActivityIndicator color={Design.colors.secondary} />
         ) : (
-          <ThemedText type="smallBold">{hasSentPassword ? 'Resend password' : 'Send password'}</ThemedText>
+          <ThemedText style={styles.secondaryButtonLabel}>
+            {hasSentPassword ? 'Resend password' : 'Send password'}
+          </ThemedText>
         )}
       </Pressable>
 
-      <TextInput
-        autoCapitalize="none"
-        autoComplete="one-time-code"
-        autoCorrect={false}
-        editable={hasSentPassword}
-        keyboardType="number-pad"
-        onChangeText={setPassword}
-        placeholder="Password"
-        placeholderTextColor={theme.textSecondary}
-        style={[
-          styles.input,
-          {
-            backgroundColor: theme.backgroundElement,
-            color: theme.text,
-            opacity: hasSentPassword ? 1 : 0.5,
-          },
-        ]}
-        textContentType="oneTimeCode"
-        value={password}
-      />
+      <View style={styles.field}>
+        <ThemedText style={styles.label}>Password</ThemedText>
+        <TextInput
+          autoCapitalize="none"
+          autoComplete="one-time-code"
+          autoCorrect={false}
+          editable={hasSentPassword}
+          keyboardType="number-pad"
+          onBlur={() => setFocusedField(null)}
+          onChangeText={setPassword}
+          onFocus={() => setFocusedField('password')}
+          placeholder="Password"
+          placeholderTextColor={Design.colors.outline}
+          style={[
+            styles.input,
+            !hasSentPassword && styles.inputDisabled,
+            focusedField === 'password' && styles.inputFocused,
+          ]}
+          textContentType="oneTimeCode"
+          value={password}
+        />
+      </View>
 
       <Pressable
         accessibilityRole="button"
@@ -157,50 +163,100 @@ export function EmailAuthForm({ mode }: EmailAuthFormProps) {
           void onSubmit();
         }}
         style={({ pressed }) => [
-          styles.button,
+          styles.primaryButton,
           {
-            backgroundColor: theme.backgroundElement,
-            opacity: !canSubmit ? 0.5 : pressed ? 0.8 : 1,
+            opacity: !canSubmit ? 0.5 : 1,
           },
+          pressed && canSubmit ? styles.neonBloom : null,
         ]}
       >
         {isSubmitting ? (
-          <ActivityIndicator color={theme.text} />
+          <ActivityIndicator color={Design.colors.onPrimary} />
         ) : (
-          <ThemedText type="smallBold">{mode === 'login' ? 'Log in' : 'Sign up'}</ThemedText>
+          <ThemedText style={styles.primaryButtonLabel}>
+            {mode === 'login' ? 'Log in' : 'Sign up'}
+          </ThemedText>
         )}
       </Pressable>
 
       {errorMessage ? (
-        <ThemedText type="small" style={styles.error}>
-          {errorMessage}
-        </ThemedText>
+        <ThemedText style={styles.error}>{errorMessage}</ThemedText>
       ) : null}
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   form: {
     alignSelf: 'stretch',
-    gap: Spacing.two,
+    gap: Design.space.md,
+  },
+  field: {
+    gap: Design.space.sm,
+  },
+  label: {
+    ...DesignType.labelCaps,
+    color: Design.colors.onSurfaceVariant,
   },
   input: {
-    borderRadius: Spacing.two,
-    fontSize: 16,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
+    ...DesignType.bodyMd,
+    backgroundColor: Design.colors.surfaceContainerLowest,
+    borderBottomColor: Design.colors.outlineVariant,
+    borderBottomWidth: 2,
+    borderRadius: Design.radius.default,
+    color: Design.colors.onSurface,
+    paddingHorizontal: Design.space.md,
+    paddingVertical: Design.space.sm + Design.space.unit,
   },
-  button: {
+  inputFocused: {
+    borderBottomColor: Design.colors.primaryContainer,
+  },
+  inputDisabled: {
+    opacity: 0.5,
+  },
+  secondaryButton: {
     alignItems: 'center',
-    borderRadius: Spacing.three,
-    minHeight: 48,
+    borderColor: Design.colors.secondary,
+    borderRadius: Design.radius.default,
+    borderWidth: 1,
     justifyContent: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
+    minHeight: 48,
+    paddingHorizontal: Design.space.md,
+    paddingVertical: Design.space.sm,
   },
+  secondaryButtonLabel: {
+    ...DesignType.bodyMd,
+    color: Design.colors.secondary,
+    fontWeight: '600',
+  },
+  primaryButton: {
+    alignItems: 'center',
+    backgroundColor: Design.colors.primaryContainer,
+    borderRadius: Design.radius.default,
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingHorizontal: Design.space.md,
+    paddingVertical: Design.space.sm,
+  },
+  primaryButtonLabel: {
+    ...DesignType.bodyMd,
+    color: Design.colors.onPrimary,
+    fontWeight: '600',
+  },
+  neonBloom: Platform.select({
+    web: {
+      boxShadow: `0 0 8px ${Design.colors.primaryContainer}73`,
+    },
+    default: {
+      shadowColor: Design.colors.primaryContainer,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.45,
+      shadowRadius: 8,
+    },
+  }),
   error: {
-    color: '#dc2626',
+    ...DesignType.dataSm,
+    color: Design.colors.error,
     textAlign: 'center',
   },
 });
