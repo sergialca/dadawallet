@@ -16,16 +16,26 @@ type TokenAmount = {
   decimals?: number;
 };
 
+export const SplTokenProgramId = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+export const SplToken2022ProgramId = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
+
 type ParsedTokenAccount = {
   account: {
     data: {
       parsed?: {
         info?: {
+          mint?: string;
           tokenAmount?: TokenAmount;
         };
       };
     };
   };
+};
+
+export type SplTokenAccountBalance = {
+  decimals: number;
+  mint: string;
+  raw: bigint;
 };
 
 export function getSolanaRpcUrl() {
@@ -80,4 +90,42 @@ export async function getSplTokenBalance(owner: string, mint: string) {
   }
 
   return { decimals, raw };
+}
+
+async function getTokenAccountsForProgram(owner: string, programId: string) {
+  const result = await solanaRpc<{ value: ParsedTokenAccount[] }>('getTokenAccountsByOwner', [
+    owner,
+    { programId },
+    { encoding: 'jsonParsed' },
+  ]);
+  return result.value;
+}
+
+export async function getSplTokenAccounts(owner: string): Promise<SplTokenAccountBalance[]> {
+  const [legacyAccounts, token2022Accounts] = await Promise.all([
+    getTokenAccountsForProgram(owner, SplTokenProgramId).catch(() => []),
+    getTokenAccountsForProgram(owner, SplToken2022ProgramId).catch(() => []),
+  ]);
+
+  const byMint = new Map<string, SplTokenAccountBalance>();
+
+  for (const account of [...legacyAccounts, ...token2022Accounts]) {
+    const info = account.account.data.parsed?.info;
+    const mint = info?.mint;
+    const amount = info?.tokenAmount?.amount;
+    if (!mint || !amount) {
+      continue;
+    }
+
+    const raw = BigInt(amount);
+    const decimals = typeof info.tokenAmount?.decimals === 'number' ? info.tokenAmount.decimals : 0;
+    const existing = byMint.get(mint);
+    if (existing) {
+      existing.raw += raw;
+    } else {
+      byMint.set(mint, { decimals, mint, raw });
+    }
+  }
+
+  return [...byMint.values()];
 }

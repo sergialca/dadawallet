@@ -1,4 +1,4 @@
-import { getSolanaBalanceLamports, getSolanaRpcUrl, getSplTokenBalance } from '@/lib/solana-rpc';
+import { getSolanaBalanceLamports, getSolanaRpcUrl, getSplTokenAccounts, getSplTokenBalance } from '@/lib/solana-rpc';
 
 describe('getSolanaRpcUrl', () => {
   const originalRpc = process.env.EXPO_PUBLIC_SOLANA_RPC_URL;
@@ -69,5 +69,42 @@ describe('Solana JSON-RPC helpers', () => {
       decimals: 6,
       raw: 3_500_000n,
     });
+  });
+
+  test('lists SPL and Token-2022 accounts by mint', async () => {
+    process.env.EXPO_PUBLIC_SOLANA_RPC_URL = 'https://example-solana-rpc.test';
+    global.fetch = jest.fn(async (_url, init) => {
+      const body = JSON.parse(String(init?.body)) as {
+        params: [string, { programId?: string }];
+      };
+      const programId = body.params[1]?.programId;
+      const mint = programId?.startsWith('Tokenz')
+        ? 'TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ'
+        : 'UsdcMint';
+
+      return {
+        ok: true,
+        json: async () => ({
+          result: {
+            value: [
+              {
+                account: {
+                  data: {
+                    parsed: {
+                      info: { mint, tokenAmount: { amount: '1500000', decimals: 6 } },
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        }),
+      };
+    }) as unknown as typeof fetch;
+
+    await expect(getSplTokenAccounts('SoLAddress111111111111111111111111111111111')).resolves.toEqual([
+      { decimals: 6, mint: 'UsdcMint', raw: 1_500_000n },
+      { decimals: 6, mint: 'TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ', raw: 1_500_000n },
+    ]);
   });
 });

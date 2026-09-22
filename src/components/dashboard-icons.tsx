@@ -235,6 +235,25 @@ export function UsdcAssetIcon() {
   );
 }
 
+export function EurcAssetIcon() {
+  return (
+    <Svg width={40} height={40} viewBox="0 0 40 40">
+      <Circle cx="20" cy="20" r="20" fill="#001f4a" />
+      <Circle cx="20" cy="20" r="11" fill="none" stroke={Design.colors.tertiaryContainer} strokeWidth="2" />
+      <SvgText
+        fill={Design.colors.tertiaryContainer}
+        fontSize="14"
+        fontWeight="700"
+        textAnchor="middle"
+        x="20"
+        y="25"
+      >
+        €
+      </SvgText>
+    </Svg>
+  );
+}
+
 export function MsftAssetIcon() {
   return (
     <Svg width={40} height={40} viewBox="0 0 40 40">

@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { useSolanaWallet } from '@/hooks/use-solana-wallet';
 import { useWalletBalances } from '@/hooks/use-wallet-balances';
-import { getSolanaBalanceLamports, getSplTokenBalance } from '@/lib/solana-rpc';
+import { getSolanaBalanceLamports, getSplTokenAccounts } from '@/lib/solana-rpc';
 
 jest.mock('@/hooks/use-solana-wallet', () => ({
   useSolanaWallet: jest.fn(),
@@ -14,7 +14,7 @@ jest.mock('@/lib/solana-rpc', () => {
   return {
     ...actual,
     getSolanaBalanceLamports: jest.fn(),
-    getSplTokenBalance: jest.fn(),
+    getSplTokenAccounts: jest.fn(),
   };
 });
 
@@ -22,7 +22,7 @@ const mockUseSolanaWallet = useSolanaWallet as jest.MockedFunction<typeof useSol
 const mockGetSolanaBalanceLamports = getSolanaBalanceLamports as jest.MockedFunction<
   typeof getSolanaBalanceLamports
 >;
-const mockGetSplTokenBalance = getSplTokenBalance as jest.MockedFunction<typeof getSplTokenBalance>;
+const mockGetSplTokenAccounts = getSplTokenAccounts as jest.MockedFunction<typeof getSplTokenAccounts>;
 
 const walletAddress = '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV';
 
@@ -64,10 +64,13 @@ function mockWallet() {
 
 function mockBalances(lamports: number, usdcRaw = 5_560_000n) {
   mockGetSolanaBalanceLamports.mockResolvedValue(lamports);
-  mockGetSplTokenBalance.mockResolvedValue({
-    decimals: 6,
-    raw: usdcRaw,
-  });
+  mockGetSplTokenAccounts.mockResolvedValue([
+    {
+      decimals: 6,
+      mint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+      raw: usdcRaw,
+    },
+  ]);
   global.fetch = jest.fn(async () => ({
     ok: true,
     json: async () => ({ solana: { usd: 100 } }),
@@ -90,7 +93,55 @@ describe('useWalletBalances', () => {
 
     expect(screen.getByTestId('asset-sol')).toBeOnTheScreen();
     expect(screen.getByTestId('asset-usdc')).toBeOnTheScreen();
+    expect(screen.getByTestId('asset-eurc')).toHaveTextContent('0 EURC');
     expect(screen.getByTestId('total')).toHaveTextContent('$7.56');
+  });
+
+  test('lists catalog tokens held in the wallet', async () => {
+    mockGetSplTokenAccounts.mockResolvedValue([
+      {
+        decimals: 6,
+        mint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+        raw: 5_560_000n,
+      },
+      {
+        decimals: 9,
+        mint: 'TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ',
+        raw: 1_500_000_000n,
+      },
+    ]);
+
+    await render(<BalancesProbe />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('asset-kalshi-tessera')).toHaveTextContent('1.5 tKalshi');
+    });
+  });
+
+  test('ignores dust from mints that are not on the allowlist', async () => {
+    mockGetSplTokenAccounts.mockResolvedValue([
+      {
+        decimals: 6,
+        mint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+        raw: 5_560_000n,
+      },
+      {
+        decimals: 6,
+        mint: 'DustMint11111111111111111111111111111111111',
+        raw: 1n,
+      },
+    ]);
+
+    await render(<BalancesProbe />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading')).toHaveTextContent('false');
+    });
+
+    expect(screen.queryByText('Dust…1111')).toBeNull();
+    expect(screen.queryByTestId('asset-DustMint11111111111111111111111111111111111')).toBeNull();
+    expect(screen.getByTestId('asset-usdc')).toBeOnTheScreen();
+    expect(screen.getByTestId('asset-eurc')).toBeOnTheScreen();
   });
 
   test('refresh keeps visible balances and uses isRefreshing instead of isLoading', async () => {

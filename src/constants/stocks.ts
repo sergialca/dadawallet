@@ -242,3 +242,14 @@ export const listedStocks = stockCatalog.stocks.filter((stock) => stock.isAvaila
 export function getStockById(stockId: string) {
   return listedStocks.find((stock) => stock.id === stockId) ?? null;
 }
+
+export function getStockByMint(mint: string) {
+  return listedStocks.find((stock) => stock.contractAddress === mint) ?? null;
+}
+
+export function isCatalogSolanaMint(mint: string) {
+  if (mint.startsWith('0x') || mint.startsWith('0X')) {
+    return false;
+  }
+  return getStockByMint(mint) != null;
+}

@@ -55,6 +55,16 @@ const walletBalances = {
       usdValue: 5.56,
       usdLabel: '$5.56',
     },
+    {
+      id: 'kalshi-tessera',
+      icon: 'token' as const,
+      name: 'Kalshi',
+      symbol: 'tKalshi',
+      amountLabel: '1.5 tKalshi',
+      usdValue: null,
+      usdLabel: '—',
+      logoUrl: 'https://logo.clearbit.com/kalshi.com',
+    },
   ],
   error: null,
   isLoading: false,
@@ -88,6 +98,8 @@ describe('DashboardScreen', () => {
     expect(screen.getByText('Send')).toBeOnTheScreen();
     expect(screen.getAllByText('SOL').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('USD Coin')).toBeOnTheScreen();
+    expect(screen.getByText('Kalshi')).toBeOnTheScreen();
+    expect(screen.getByText('1.5 tKalshi')).toBeOnTheScreen();
   });
 
   test('switches to the watchlist tab', async () => {

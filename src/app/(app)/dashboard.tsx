@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { usePathname, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -12,6 +13,7 @@ import {
   MsftAssetIcon,
   PortfolioSparkline,
   UsdcAssetIcon,
+  EurcAssetIcon,
   UserIcon,
 } from '@/components/dashboard-icons';
 import { SolanaWalletAddress } from '@/components/solana-wallet-address';
@@ -41,11 +43,33 @@ const WATCHLIST: WatchlistRow[] = [
   },
 ];
 
-function AssetIcon({ icon }: { icon: WalletAsset['icon'] }) {
-  if (icon === 'sol') {
+function AssetIcon({ asset }: { asset: WalletAsset }) {
+  if (asset.icon === 'sol') {
     return <SolAssetIcon />;
   }
-  return <UsdcAssetIcon />;
+  if (asset.icon === 'usdc') {
+    return <UsdcAssetIcon />;
+  }
+  if (asset.icon === 'eurc') {
+    return <EurcAssetIcon />;
+  }
+  if (asset.logoUrl) {
+    return (
+      <View style={styles.tokenLogoWrap}>
+        <Image
+          accessibilityLabel={`${asset.name} logo`}
+          contentFit="contain"
+          source={{ uri: asset.logoUrl }}
+          style={styles.tokenLogo}
+        />
+      </View>
+    );
+  }
+  return (
+    <View style={styles.tokenLogoWrap}>
+      <ThemedText style={styles.tokenLogoFallback}>{asset.symbol.slice(0, 1)}</ThemedText>
+    </View>
+  );
 }
 
 export default function DashboardScreen() {
@@ -165,7 +189,7 @@ export default function DashboardScreen() {
             {listTab === 'assets' && !isLoading && assets.length > 0
               ? assets.map((asset) => (
                   <View key={asset.id} style={styles.assetRow}>
-                    <AssetIcon icon={asset.icon} />
+                    <AssetIcon asset={asset} />
                     <View style={styles.assetCopy}>
                       <ThemedText style={styles.assetName}>{asset.name}</ThemedText>
                       <ThemedText style={styles.assetSymbol}>{asset.symbol}</ThemedText>
@@ -339,6 +363,24 @@ const styles = StyleSheet.create({
   },
   listTabActive: {
     color: Design.colors.onSurface,
+  },
+  tokenLogoWrap: {
+    alignItems: 'center',
+    backgroundColor: Design.colors.surfaceContainerLowest,
+    borderRadius: Design.radius.lg,
+    height: 40,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    width: 40,
+  },
+  tokenLogo: {
+    height: 28,
+    width: 28,
+  },
+  tokenLogoFallback: {
+    ...DesignType.bodyMd,
+    color: Design.colors.onSurface,
+    fontWeight: '600',
   },
   assetList: {
     gap: Design.space.sm,

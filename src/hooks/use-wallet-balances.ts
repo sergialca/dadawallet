@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { SolanaUsdcDecimals, SolanaUsdcMint } from '@/constants/tokens';
+import { getStockByMint, isCatalogSolanaMint } from '@/constants/stocks';
+import { SolanaStablecoins, isSolanaCashMint } from '@/constants/tokens';
 import { useSolanaWallet } from '@/hooks/use-solana-wallet';
 import { formatAmount } from '@/lib/format-amount';
-import { getSolanaBalanceLamports, getSplTokenBalance, LamportsPerSol } from '@/lib/solana-rpc';
+import {
+  getSolanaBalanceLamports,
+  getSplTokenAccounts,
+  LamportsPerSol,
+  type SplTokenAccountBalance,
+} from '@/lib/solana-rpc';
 
 export type WalletAsset = {
   amountLabel: string;
-  icon: 'sol' | 'usdc';
+  icon: 'sol' | 'usdc' | 'eurc' | 'token';
   id: string;
+  logoUrl?: string;
   name: string;
   symbol: string;
   usdValue: number | null;
@@ -52,44 +59,89 @@ async function fetchSolUsdPrice() {
   return typeof payload.solana?.usd === 'number' ? payload.solana.usd : null;
 }
 
+function isAllowedWalletMint(mint: string) {
+  return isSolanaCashMint(mint) || isCatalogSolanaMint(mint);
+}
+
+function tokenToAsset(token: SplTokenAccountBalance): WalletAsset | null {
+  const amount = formatTokenAmount(token.raw, token.decimals);
+  const stablecoin = SolanaStablecoins.find((item) => item.mint === token.mint);
+
+  if (stablecoin) {
+    const usdValue = stablecoin.symbol === 'USDC' ? Number(amount) : null;
+    return {
+      id: stablecoin.id,
+      icon: stablecoin.icon,
+      name: stablecoin.name,
+      symbol: stablecoin.symbol,
+      amountLabel: `${formatAmount(amount, 2)} ${stablecoin.symbol}`,
+      usdValue,
+      usdLabel: usdValue == null ? '—' : formatUsd(usdValue),
+    };
+  }
+
+  const stock = getStockByMint(token.mint);
+  if (!stock || !isCatalogSolanaMint(token.mint)) {
+    return null;
+  }
+
+  return {
+    id: stock.id,
+    icon: 'token',
+    logoUrl: stock.logoUrl,
+    name: stock.name,
+    symbol: stock.ticker,
+    amountLabel: `${formatAmount(amount, 4)} ${stock.tokenSymbol}`,
+    usdValue: null,
+    usdLabel: '—',
+  };
+}
+
 async function fetchWalletAssets(walletAddress: string) {
-  const [lamports, usdc, solUsd] = await Promise.all([
+  const [lamports, tokenAccounts, solUsd] = await Promise.all([
     getSolanaBalanceLamports(walletAddress),
-    getSplTokenBalance(walletAddress, SolanaUsdcMint).catch(() => ({
-      decimals: SolanaUsdcDecimals,
-      raw: 0n,
-    })),
+    getSplTokenAccounts(walletAddress),
     fetchSolUsdPrice().catch(() => null),
   ]);
 
   const solAmount = formatTokenAmount(BigInt(lamports), 9);
-  const usdcAmount = formatTokenAmount(usdc.raw, usdc.decimals);
   const solUsdValue = solUsd == null ? null : (lamports / LamportsPerSol) * solUsd;
-  const usdcUsdValue = Number(usdcAmount);
+
+  const cashAssets = SolanaStablecoins.map((stablecoin) => {
+    const held = tokenAccounts.find((token) => token.mint === stablecoin.mint);
+    return tokenToAsset({
+      decimals: held?.decimals ?? stablecoin.decimals,
+      mint: stablecoin.mint,
+      raw: held?.raw ?? 0n,
+    });
+  }).filter((asset): asset is WalletAsset => asset != null);
+
+  const stockAssets = tokenAccounts
+    .filter((token) => isAllowedWalletMint(token.mint) && !isSolanaCashMint(token.mint) && token.raw > 0n)
+    .map(tokenToAsset)
+    .filter((asset): asset is WalletAsset => asset != null)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const assets: WalletAsset[] = [
+    {
+      id: 'sol',
+      icon: 'sol',
+      name: 'SOL',
+      symbol: 'SOL',
+      amountLabel: `${formatAmount(solAmount, 6)} SOL`,
+      usdValue: solUsdValue,
+      usdLabel: solUsdValue == null ? '—' : formatUsd(solUsdValue),
+    },
+    ...cashAssets,
+    ...stockAssets,
+  ];
+
+  const knownUsd = assets.reduce((sum, asset) => sum + (asset.usdValue ?? 0), 0);
 
   return {
-    assets: [
-      {
-        id: 'sol' as const,
-        icon: 'sol' as const,
-        name: 'SOL',
-        symbol: 'SOL',
-        amountLabel: `${formatAmount(solAmount, 6)} SOL`,
-        usdValue: solUsdValue,
-        usdLabel: solUsdValue == null ? '—' : formatUsd(solUsdValue),
-      },
-      {
-        id: 'usdc' as const,
-        icon: 'usdc' as const,
-        name: 'USD Coin',
-        symbol: 'USDC',
-        amountLabel: `${formatAmount(usdcAmount, 2)} USDC`,
-        usdValue: usdcUsdValue,
-        usdLabel: formatUsd(usdcUsdValue),
-      },
-    ],
+    assets,
     solAmountLabel: `${formatAmount(solAmount, 6)} SOL`,
-    totalUsd: solUsdValue == null ? null : solUsdValue + usdcUsdValue,
+    totalUsd: solUsdValue == null ? null : knownUsd,
   };
 }
 
