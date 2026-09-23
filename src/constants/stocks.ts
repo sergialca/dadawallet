@@ -1,13 +1,14 @@
+import { SolanaUsdcDecimals, SolanaUsdcMint } from '@/constants/tokens';
 import type { StockCatalog } from '@/types/stocks';
 
 export const stockCatalog: StockCatalog = {
-  network: 'ethereum-mainnet',
-  chainId: 1,
+  network: 'solana',
+  chainId: 'solana-900',
   provider: 'Ondo Global Markets',
   settlementToken: {
     symbol: 'USDC',
-    address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    decimals: 6,
+    address: SolanaUsdcMint,
+    decimals: SolanaUsdcDecimals,
   },
   stocks: [
     {
@@ -15,7 +16,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'AAPL',
       name: 'Apple Inc.',
       tokenSymbol: 'AAPLon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Consumer Electronics',
       description:
@@ -29,7 +30,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'MSFT',
       name: 'Microsoft Corporation',
       tokenSymbol: 'MSFTon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Enterprise Software & Cloud',
       description:
@@ -43,7 +44,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'NVDA',
       name: 'NVIDIA Corporation',
       tokenSymbol: 'NVDAon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Semiconductors & AI',
       description:
@@ -57,7 +58,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'AMZN',
       name: 'Amazon.com, Inc.',
       tokenSymbol: 'AMZNon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'E-Commerce & Cloud',
       description:
@@ -71,7 +72,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'GOOGL',
       name: 'Alphabet Inc.',
       tokenSymbol: 'GOOGLon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Internet Services & AI',
       description:
@@ -85,7 +86,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'META',
       name: 'Meta Platforms, Inc.',
       tokenSymbol: 'METAon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Social Media & Metaverse',
       description:
@@ -99,7 +100,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'TSLA',
       name: 'Tesla, Inc.',
       tokenSymbol: 'TSLAon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Electric Vehicles & Clean Energy',
       description:
@@ -113,7 +114,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'SPCX',
       name: 'SpaceX',
       tokenSymbol: 'SPCXon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Aerospace',
       description:
@@ -127,7 +128,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'INTC',
       name: 'Intel Corporation',
       tokenSymbol: 'INTCon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Semiconductors',
       description:
@@ -141,7 +142,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'MSTR',
       name: 'MicroStrategy, Inc.',
       tokenSymbol: 'MSTRon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Enterprise Software & Bitcoin',
       description:
@@ -155,7 +156,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'AUR',
       name: 'Aurora Innovation, Inc.',
       tokenSymbol: 'AURon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Autonomous Vehicles',
       description:
@@ -169,7 +170,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'HOOD',
       name: 'Robinhood Markets, Inc.',
       tokenSymbol: 'HOODon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Digital Brokerage',
       description:
@@ -183,7 +184,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'COIN',
       name: 'Coinbase Global, Inc.',
       tokenSymbol: 'COINon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Crypto Exchange',
       description:
@@ -197,7 +198,7 @@ export const stockCatalog: StockCatalog = {
       ticker: 'NOK',
       name: 'Nokia Corporation',
       tokenSymbol: 'NOKon',
-      contractAddress: '0x0000000000000000000000000000000000000000',
+      contractAddress: '',
       decimals: 18,
       category: 'Telecommunications Equipment',
       description:
@@ -244,12 +245,12 @@ export function getStockById(stockId: string) {
 }
 
 export function getStockByMint(mint: string) {
+  if (!mint) {
+    return null;
+  }
   return listedStocks.find((stock) => stock.contractAddress === mint) ?? null;
 }
 
 export function isCatalogSolanaMint(mint: string) {
-  if (mint.startsWith('0x') || mint.startsWith('0X')) {
-    return false;
-  }
   return getStockByMint(mint) != null;
 }

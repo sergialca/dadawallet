@@ -32,12 +32,12 @@ describe('ActivityScreen', () => {
       isLoading: false,
       transfers: [
         {
-          id: '0xaaa:external',
-          asset: 'ETH',
+          id: 'sig:transfer',
+          asset: 'SOL',
           value: '0.5',
-          from: '0xef4396d9ff8107086d215a1c9f8866c54795d7c7',
-          to: '0x5c43b1ed97e52d009611d89b74fa829fe4ac56b1',
-          hash: '0x3847245c01829b043431067fb2bfa95f7b5bdc7e4246c843e7a573ab6f26f5ff',
+          from: '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV',
+          to: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+          hash: '5Kb8kLf9zgWQnogidDA76MzPL6TsZZY36hWXMssSzNydYXYB9KF',
         },
       ],
     });
@@ -45,14 +45,14 @@ describe('ActivityScreen', () => {
     await render(<ActivityScreen />);
 
     expect(screen.getAllByText('Activity').length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText('ETH')).toBeOnTheScreen();
+    expect(screen.getByText('SOL')).toBeOnTheScreen();
     expect(screen.getByText('0.5')).toBeOnTheScreen();
     expect(screen.getByText('From')).toBeOnTheScreen();
     expect(screen.getByText('To')).toBeOnTheScreen();
     expect(screen.getByText('Hash')).toBeOnTheScreen();
-    expect(screen.getByText('0xef43…d7c7')).toBeOnTheScreen();
-    expect(screen.getByText('0x5c43…56b1')).toBeOnTheScreen();
-    expect(screen.getByText('0x3847…f5ff')).toBeOnTheScreen();
+    expect(screen.getByText('7EcD…FLtV')).toBeOnTheScreen();
+    expect(screen.getByText('EPjF…Dt1v')).toBeOnTheScreen();
+    expect(screen.getByText('5Kb8…B9KF')).toBeOnTheScreen();
     expect(screen.getByText('Screen: src/app/(app)/activity.tsx')).toBeOnTheScreen();
     expect(screen.getByText('Route: /activity')).toBeOnTheScreen();
   });

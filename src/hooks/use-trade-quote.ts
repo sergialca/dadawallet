@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { parseUnits } from 'viem';
-
 import {
   DefaultSlippagePercent,
   OndoApiBaseUrl,
@@ -40,12 +38,7 @@ async function fetchJson<T>(url: string, init?: RequestInit) {
   return payload;
 }
 
-export function toUint18(value: string) {
-  if (value.includes('.')) {
-    return parseUnits(value, 18);
-  }
-  return BigInt(value);
-}
+const OndoQuoteDecimals = 18;
 
 function toNumber(value: string | undefined) {
   if (!value) {
@@ -53,6 +46,31 @@ function toNumber(value: string | undefined) {
   }
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
+}
+
+export function fromOndoUint18(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  if (value.includes('.') || value.includes('e') || value.includes('E')) {
+    return toNumber(value);
+  }
+
+  try {
+    const raw = BigInt(value);
+    const negative = raw < 0n;
+    const absolute = (negative ? -raw : raw).toString().padStart(OndoQuoteDecimals + 1, '0');
+    const whole = absolute.slice(0, -OndoQuoteDecimals);
+    const fraction = absolute.slice(-OndoQuoteDecimals).replace(/0+$/, '');
+    const numeric = Number(`${whole}.${fraction || '0'}`);
+    if (!Number.isFinite(numeric)) {
+      return null;
+    }
+    return negative ? -numeric : numeric;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchOndoPrice(symbol: string) {
@@ -128,10 +146,53 @@ async function fetchUnderlyingPrice(ticker: string) {
   throw new Error('Yahoo price missing');
 }
 
-async function fetchDisplayPrice(symbol: string, ticker: string) {
-  const ondoPrice = await fetchOndoPrice(symbol).catch(() => null);
-  if (ondoPrice && ondoPrice > 0) {
-    return ondoPrice;
+const DexscreenerTokensUrl = 'https://api.dexscreener.com/latest/dex/tokens';
+
+type DexscreenerPair = {
+  baseToken?: { address?: string };
+  chainId?: string;
+  liquidity?: { usd?: number };
+  priceUsd?: string;
+  quoteToken?: { symbol?: string };
+};
+
+export async function fetchDexscreenerPrice(mint: string) {
+  const response = await fetch(`${DexscreenerTokensUrl}/${encodeURIComponent(mint)}`);
+  if (!response.ok) {
+    throw new Error('Dexscreener price request failed');
+  }
+
+  const payload = (await response.json()) as { pairs?: DexscreenerPair[] | null };
+  const best = (payload.pairs ?? [])
+    .filter((pair) => {
+      const price = Number(pair.priceUsd);
+      return (
+        pair.chainId === 'solana' &&
+        pair.baseToken?.address === mint &&
+        pair.quoteToken?.symbol === 'USDC' &&
+        Number.isFinite(price) &&
+        price > 0
+      );
+    })
+    .sort((left, right) => (right.liquidity?.usd ?? 0) - (left.liquidity?.usd ?? 0))[0];
+
+  const price = Number(best?.priceUsd);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}
+
+async function fetchDisplayPrice(symbol: string, ticker: string, mint: string) {
+  if (mint) {
+    const poolPrice = await fetchDexscreenerPrice(mint).catch(() => null);
+    if (poolPrice) {
+      return poolPrice;
+    }
+  }
+
+  if (symbol) {
+    const ondoPrice = await fetchOndoPrice(symbol).catch(() => null);
+    if (ondoPrice && ondoPrice > 0) {
+      return ondoPrice;
+    }
   }
 
   if (!ticker) {
@@ -154,6 +215,7 @@ async function fetchDisplayPrice(symbol: string, ticker: string) {
 }
 
 export function useTradeQuote(input: {
+  mint?: string;
   notionalUsdc: number;
   side: OndoQuoteSide;
   symbol: string;
@@ -171,7 +233,8 @@ export function useTradeQuote(input: {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!input.symbol && !input.ticker) {
+    const mint = input.mint ?? '';
+    if (!input.symbol && !input.ticker && !mint) {
       return;
     }
 
@@ -180,7 +243,7 @@ export function useTradeQuote(input: {
     void (async () => {
       setIsLoading(true);
       try {
-        const midPrice = await fetchDisplayPrice(input.symbol, input.ticker);
+        const midPrice = await fetchDisplayPrice(input.symbol, input.ticker, mint);
         if (!cancelled && midPrice) {
           setQuote((current) => ({
             ...current,
@@ -202,7 +265,7 @@ export function useTradeQuote(input: {
     return () => {
       cancelled = true;
     };
-  }, [input.symbol, input.ticker]);
+  }, [input.mint, input.symbol, input.ticker]);
 
   useEffect(() => {
     let cancelled = false;
@@ -213,7 +276,8 @@ export function useTradeQuote(input: {
 
         try {
           const midPrice =
-            (await fetchDisplayPrice(input.symbol, input.ticker).catch(() => null)) ?? null;
+            (await fetchDisplayPrice(input.symbol, input.ticker, input.mint ?? '').catch(() => null)) ??
+            null;
           if (cancelled) {
             return;
           }
@@ -232,21 +296,31 @@ export function useTradeQuote(input: {
 
           let quotePrice = midPrice;
           let estimatedShares = 0;
+          let quoted = false;
 
-          try {
-            const softQuote = await fetchOndoSoftQuote({
-              notionalValue: input.notionalUsdc.toString(),
-              side: input.side,
-              symbol: input.symbol,
-            });
-            quotePrice = toNumber(softQuote.price) ?? quotePrice;
-            estimatedShares = toNumber(softQuote.tokenAmount) ?? 0;
-          } catch {
-            if (quotePrice && quotePrice > 0) {
-              const signedSpread = input.side === 'buy' ? 1 + FALLBACK_SPREAD : 1 - FALLBACK_SPREAD;
-              quotePrice *= signedSpread;
-              estimatedShares = input.notionalUsdc / quotePrice;
+          if (input.symbol) {
+            try {
+              const softQuote = await fetchOndoSoftQuote({
+                notionalValue: input.notionalUsdc.toString(),
+                side: input.side,
+                symbol: input.symbol,
+              });
+              const nextPrice = fromOndoUint18(softQuote.price);
+              const nextShares = fromOndoUint18(softQuote.tokenAmount);
+              if (nextPrice && nextPrice > 0 && nextShares != null) {
+                quotePrice = nextPrice;
+                estimatedShares = nextShares;
+                quoted = true;
+              }
+            } catch {
+              quoted = false;
             }
+          }
+
+          if (!quoted && quotePrice && quotePrice > 0) {
+            const signedSpread = input.side === 'buy' ? 1 + FALLBACK_SPREAD : 1 - FALLBACK_SPREAD;
+            quotePrice *= signedSpread;
+            estimatedShares = input.notionalUsdc / quotePrice;
           }
 
           const feeUsdc =
@@ -281,7 +355,7 @@ export function useTradeQuote(input: {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [input.notionalUsdc, input.side, input.symbol, input.ticker]);
+  }, [input.mint, input.notionalUsdc, input.side, input.symbol, input.ticker]);
 
   return { error, isLoading, quote };
 }

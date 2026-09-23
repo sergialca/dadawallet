@@ -25,10 +25,10 @@ jest.mock('@/hooks/use-color-scheme', () => ({
 
 jest.mock('@/hooks/use-solana-wallet', () => ({
   useSolanaWallet: () => ({
-    address: '0x1111111111111111111111111111111111111111',
+    address: '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV',
     error: null,
     isLoading: false,
-    wallet: { address: '0x1111111111111111111111111111111111111111' },
+    wallet: { address: '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV' },
   }),
 }));
 
@@ -37,7 +37,7 @@ const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
 const mockUsePrivy = usePrivy as jest.MockedFunction<typeof usePrivy>;
 const mockSetStringAsync = Clipboard.setStringAsync as jest.MockedFunction<typeof Clipboard.setStringAsync>;
 
-const FULL_ADDRESS = '0x1111111111111111111111111111111111111111';
+const FULL_ADDRESS = '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV';
 
 describe('ProfileScreen', () => {
   const logout = jest.fn();

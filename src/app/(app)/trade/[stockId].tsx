@@ -37,9 +37,10 @@ export default function BuySellScreen() {
   const notionalUsdc = parseAmount(amountInput);
   const { balance: usdcBalance, isLoading: usdcLoading, refresh: refreshBalance } = useUsdcBalance();
   const { quote, isLoading: quoteLoading } = useTradeQuote({
+    mint: stock?.kind === 'pre-IPO stock' ? stock.contractAddress : '',
     notionalUsdc,
     side,
-    symbol: stock?.tokenSymbol ?? '',
+    symbol: stock?.kind === 'stock' ? stock.tokenSymbol : '',
     ticker: stock?.ticker ?? '',
   });
   const belowMinimum = notionalUsdc > 0 && notionalUsdc < MinimumOrderUsdc;
