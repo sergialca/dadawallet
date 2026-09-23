@@ -1,5 +1,5 @@
 import { OndoChainId } from '@/constants/ondo';
-import { fetchOndoSoftQuote, fromOndoUint18 } from '@/hooks/use-trade-quote';
+import { fetchDexscreenerPrice, fetchOndoSoftQuote, fromOndoUint18 } from '@/hooks/use-trade-quote';
 
 describe('fromOndoUint18', () => {
   test('decodes an 18-decimal Ondo quote amount', () => {
@@ -9,6 +9,51 @@ describe('fromOndoUint18', () => {
 
   test('accepts a decimal string', () => {
     expect(fromOndoUint18('10.5')).toBe(10.5);
+  });
+});
+
+describe('fetchDexscreenerPrice', () => {
+  const mint = 'oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ';
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('uses the deepest Solana USDC pool', async () => {
+    const fetchMock = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        pairs: [
+          {
+            chainId: 'solana',
+            priceUsd: '1116.47',
+            liquidity: { usd: 8 },
+            baseToken: { address: mint },
+            quoteToken: { symbol: 'USDC' },
+          },
+          {
+            chainId: 'solana',
+            priceUsd: '1049.07',
+            liquidity: { usd: 609494 },
+            baseToken: { address: mint },
+            quoteToken: { symbol: 'USDC' },
+          },
+          {
+            chainId: 'solana',
+            priceUsd: '0.00002',
+            liquidity: { usd: 16000 },
+            baseToken: { address: 'So11111111111111111111111111111111111111112' },
+            quoteToken: { symbol: 'tOpenAI' },
+          },
+        ],
+      }),
+    }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    await expect(fetchDexscreenerPrice(mint)).resolves.toBe(1049.07);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
+      `https://api.dexscreener.com/latest/dex/tokens/${mint}`,
+    );
   });
 });
 

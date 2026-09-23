@@ -37,6 +37,7 @@ export default function BuySellScreen() {
   const notionalUsdc = parseAmount(amountInput);
   const { balance: usdcBalance, isLoading: usdcLoading, refresh: refreshBalance } = useUsdcBalance();
   const { quote, isLoading: quoteLoading } = useTradeQuote({
+    mint: stock?.kind === 'pre-IPO stock' ? stock.contractAddress : '',
     notionalUsdc,
     side,
     symbol: stock?.kind === 'stock' ? stock.tokenSymbol : '',

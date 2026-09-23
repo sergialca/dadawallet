@@ -146,10 +146,53 @@ async function fetchUnderlyingPrice(ticker: string) {
   throw new Error('Yahoo price missing');
 }
 
-async function fetchDisplayPrice(symbol: string, ticker: string) {
-  const ondoPrice = await fetchOndoPrice(symbol).catch(() => null);
-  if (ondoPrice && ondoPrice > 0) {
-    return ondoPrice;
+const DexscreenerTokensUrl = 'https://api.dexscreener.com/latest/dex/tokens';
+
+type DexscreenerPair = {
+  baseToken?: { address?: string };
+  chainId?: string;
+  liquidity?: { usd?: number };
+  priceUsd?: string;
+  quoteToken?: { symbol?: string };
+};
+
+export async function fetchDexscreenerPrice(mint: string) {
+  const response = await fetch(`${DexscreenerTokensUrl}/${encodeURIComponent(mint)}`);
+  if (!response.ok) {
+    throw new Error('Dexscreener price request failed');
+  }
+
+  const payload = (await response.json()) as { pairs?: DexscreenerPair[] | null };
+  const best = (payload.pairs ?? [])
+    .filter((pair) => {
+      const price = Number(pair.priceUsd);
+      return (
+        pair.chainId === 'solana' &&
+        pair.baseToken?.address === mint &&
+        pair.quoteToken?.symbol === 'USDC' &&
+        Number.isFinite(price) &&
+        price > 0
+      );
+    })
+    .sort((left, right) => (right.liquidity?.usd ?? 0) - (left.liquidity?.usd ?? 0))[0];
+
+  const price = Number(best?.priceUsd);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}
+
+async function fetchDisplayPrice(symbol: string, ticker: string, mint: string) {
+  if (mint) {
+    const poolPrice = await fetchDexscreenerPrice(mint).catch(() => null);
+    if (poolPrice) {
+      return poolPrice;
+    }
+  }
+
+  if (symbol) {
+    const ondoPrice = await fetchOndoPrice(symbol).catch(() => null);
+    if (ondoPrice && ondoPrice > 0) {
+      return ondoPrice;
+    }
   }
 
   if (!ticker) {
@@ -172,6 +215,7 @@ async function fetchDisplayPrice(symbol: string, ticker: string) {
 }
 
 export function useTradeQuote(input: {
+  mint?: string;
   notionalUsdc: number;
   side: OndoQuoteSide;
   symbol: string;
@@ -189,7 +233,8 @@ export function useTradeQuote(input: {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!input.symbol && !input.ticker) {
+    const mint = input.mint ?? '';
+    if (!input.symbol && !input.ticker && !mint) {
       return;
     }
 
@@ -198,7 +243,7 @@ export function useTradeQuote(input: {
     void (async () => {
       setIsLoading(true);
       try {
-        const midPrice = await fetchDisplayPrice(input.symbol, input.ticker);
+        const midPrice = await fetchDisplayPrice(input.symbol, input.ticker, mint);
         if (!cancelled && midPrice) {
           setQuote((current) => ({
             ...current,
@@ -220,7 +265,7 @@ export function useTradeQuote(input: {
     return () => {
       cancelled = true;
     };
-  }, [input.symbol, input.ticker]);
+  }, [input.mint, input.symbol, input.ticker]);
 
   useEffect(() => {
     let cancelled = false;
@@ -231,7 +276,8 @@ export function useTradeQuote(input: {
 
         try {
           const midPrice =
-            (await fetchDisplayPrice(input.symbol, input.ticker).catch(() => null)) ?? null;
+            (await fetchDisplayPrice(input.symbol, input.ticker, input.mint ?? '').catch(() => null)) ??
+            null;
           if (cancelled) {
             return;
           }
@@ -309,7 +355,7 @@ export function useTradeQuote(input: {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [input.notionalUsdc, input.side, input.symbol, input.ticker]);
+  }, [input.mint, input.notionalUsdc, input.side, input.symbol, input.ticker]);
 
   return { error, isLoading, quote };
 }
