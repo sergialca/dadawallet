@@ -22,12 +22,12 @@ function TransferField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function truncateHex(value: string) {
-  if (!value.startsWith('0x') || value.length < 12) {
+function truncateAddress(value: string) {
+  if (value.length < 12) {
     return value;
   }
 
-  return `${value.slice(0, 6)}…${value.slice(-4)}`;
+  return `${value.slice(0, 4)}…${value.slice(-4)}`;
 }
 
 function TransferCard({ transfer }: { transfer: WalletTransfer }) {
@@ -39,9 +39,9 @@ function TransferCard({ transfer }: { transfer: WalletTransfer }) {
           <ThemedText style={styles.asset}>{transfer.asset}</ThemedText>
           <ThemedText style={styles.value}>{transfer.value}</ThemedText>
         </View>
-        <TransferField label="From" value={truncateHex(transfer.from)} />
-        <TransferField label="To" value={truncateHex(transfer.to)} />
-        <TransferField label="Hash" value={truncateHex(transfer.hash)} />
+        <TransferField label="From" value={truncateAddress(transfer.from)} />
+        <TransferField label="To" value={truncateAddress(transfer.to)} />
+        <TransferField label="Hash" value={truncateAddress(transfer.hash)} />
       </View>
     </View>
   );

@@ -7,7 +7,7 @@ dadawallet is a mobile app for holding and trading onchain assets from a single 
 - Review incoming and outgoing transfers on the activity screen
 - Open profile to copy the wallet address or log out
 
-The wallet lives on **Solana Devnet** for balances and activity. Stock quotes still target **Ethereum** USDC via Ondo’s API.
+The wallet lives on **Solana Devnet** for balances and activity. Stock quotes use Ondo on Solana (`solana-900`).
 
 ## Stack
 

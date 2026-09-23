@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { parseUnits } from 'viem';
-
 import {
   DefaultSlippagePercent,
   OndoApiBaseUrl,
@@ -40,12 +38,7 @@ async function fetchJson<T>(url: string, init?: RequestInit) {
   return payload;
 }
 
-export function toUint18(value: string) {
-  if (value.includes('.')) {
-    return parseUnits(value, 18);
-  }
-  return BigInt(value);
-}
+const OndoQuoteDecimals = 18;
 
 function toNumber(value: string | undefined) {
   if (!value) {
@@ -53,6 +46,31 @@ function toNumber(value: string | undefined) {
   }
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
+}
+
+export function fromOndoUint18(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  if (value.includes('.') || value.includes('e') || value.includes('E')) {
+    return toNumber(value);
+  }
+
+  try {
+    const raw = BigInt(value);
+    const negative = raw < 0n;
+    const absolute = (negative ? -raw : raw).toString().padStart(OndoQuoteDecimals + 1, '0');
+    const whole = absolute.slice(0, -OndoQuoteDecimals);
+    const fraction = absolute.slice(-OndoQuoteDecimals).replace(/0+$/, '');
+    const numeric = Number(`${whole}.${fraction || '0'}`);
+    if (!Number.isFinite(numeric)) {
+      return null;
+    }
+    return negative ? -numeric : numeric;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchOndoPrice(symbol: string) {
@@ -232,21 +250,31 @@ export function useTradeQuote(input: {
 
           let quotePrice = midPrice;
           let estimatedShares = 0;
+          let quoted = false;
 
-          try {
-            const softQuote = await fetchOndoSoftQuote({
-              notionalValue: input.notionalUsdc.toString(),
-              side: input.side,
-              symbol: input.symbol,
-            });
-            quotePrice = toNumber(softQuote.price) ?? quotePrice;
-            estimatedShares = toNumber(softQuote.tokenAmount) ?? 0;
-          } catch {
-            if (quotePrice && quotePrice > 0) {
-              const signedSpread = input.side === 'buy' ? 1 + FALLBACK_SPREAD : 1 - FALLBACK_SPREAD;
-              quotePrice *= signedSpread;
-              estimatedShares = input.notionalUsdc / quotePrice;
+          if (input.symbol) {
+            try {
+              const softQuote = await fetchOndoSoftQuote({
+                notionalValue: input.notionalUsdc.toString(),
+                side: input.side,
+                symbol: input.symbol,
+              });
+              const nextPrice = fromOndoUint18(softQuote.price);
+              const nextShares = fromOndoUint18(softQuote.tokenAmount);
+              if (nextPrice && nextPrice > 0 && nextShares != null) {
+                quotePrice = nextPrice;
+                estimatedShares = nextShares;
+                quoted = true;
+              }
+            } catch {
+              quoted = false;
             }
+          }
+
+          if (!quoted && quotePrice && quotePrice > 0) {
+            const signedSpread = input.side === 'buy' ? 1 + FALLBACK_SPREAD : 1 - FALLBACK_SPREAD;
+            quotePrice *= signedSpread;
+            estimatedShares = input.notionalUsdc / quotePrice;
           }
 
           const feeUsdc =

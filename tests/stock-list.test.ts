@@ -5,7 +5,7 @@ import type { StockAsset } from '@/types/stocks';
 function stock(overrides: Partial<StockAsset> & Pick<StockAsset, 'id' | 'name' | 'ticker'>): StockAsset {
   return {
     tokenSymbol: `${overrides.ticker}on`,
-    contractAddress: '0x0000000000000000000000000000000000000000',
+    contractAddress: '',
     decimals: 18,
     category: 'Test',
     description: 'Test stock',

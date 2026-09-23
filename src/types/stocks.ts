@@ -1,8 +1,6 @@
-import { Address } from 'viem';
-
 export interface SettlementToken {
   symbol: string;
-  address: Address;
+  address: string;
   decimals: number;
 }
 
@@ -24,7 +22,7 @@ export interface StockAsset {
 
 export interface StockCatalog {
   network: string;
-  chainId: number;
+  chainId: string;
   provider: string;
   settlementToken: SettlementToken;
   stocks: StockAsset[];

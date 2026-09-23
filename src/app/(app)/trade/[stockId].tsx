@@ -39,7 +39,7 @@ export default function BuySellScreen() {
   const { quote, isLoading: quoteLoading } = useTradeQuote({
     notionalUsdc,
     side,
-    symbol: stock?.tokenSymbol ?? '',
+    symbol: stock?.kind === 'stock' ? stock.tokenSymbol : '',
     ticker: stock?.ticker ?? '',
   });
   const belowMinimum = notionalUsdc > 0 && notionalUsdc < MinimumOrderUsdc;

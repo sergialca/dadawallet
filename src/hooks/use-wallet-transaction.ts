@@ -17,10 +17,6 @@ export function useWalletTransaction() {
       throw new Error('Wallet is not ready.');
     }
 
-    if (!('lamports' in input)) {
-      throw new Error('This wallet is on Solana. Ethereum contract calls are not available.');
-    }
-
     const connection = getSolanaConnection();
     const fromPubkey = new PublicKey(address);
     const transaction = new Transaction().add(
