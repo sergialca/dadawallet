@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { usePathname, useRouter } from 'expo-router';
-import { useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,8 +9,6 @@ import {
   ArrowUpIcon,
   SolAssetIcon,
   HexLogo,
-  MsftAssetIcon,
-  PortfolioSparkline,
   UsdcAssetIcon,
   EurcAssetIcon,
   UserIcon,
@@ -22,26 +19,6 @@ import { Design, DesignType } from '@/constants/design';
 import { SolanaNetworkLabel } from '@/constants/tokens';
 import { MaxContentWidth } from '@/constants/theme';
 import { useWalletBalances, type WalletAsset } from '@/hooks/use-wallet-balances';
-
-type WatchlistRow = {
-  amount: string;
-  id: string;
-  name: string;
-  sentiment?: 'bearish';
-  symbol: string;
-  value: string;
-};
-
-const WATCHLIST: WatchlistRow[] = [
-  {
-    id: 'msft',
-    name: 'Microsoft',
-    symbol: 'MSFT',
-    amount: '1,000,000',
-    value: '-$2.45 (-5%)',
-    sentiment: 'bearish',
-  },
-];
 
 function AssetIcon({ asset }: { asset: WalletAsset }) {
   if (asset.icon === 'sol') {
@@ -76,7 +53,6 @@ export default function DashboardScreen() {
   const pathname = usePathname();
   const router = useRouter();
   const { assets, error, isLoading, isRefreshing, refresh, totalUsdLabel } = useWalletBalances();
-  const [listTab, setListTab] = useState<'assets' | 'watchlist'>('assets');
 
   return (
     <View style={styles.screen}>
@@ -131,9 +107,6 @@ export default function DashboardScreen() {
             <ThemedText style={styles.portfolioValue}>
               {isLoading ? '…' : totalUsdLabel}
             </ThemedText>
-            <View style={styles.sparkline}>
-              <PortfolioSparkline />
-            </View>
           </View>
 
           <View style={styles.actions}>
@@ -151,42 +124,21 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.listTabs}>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected: listTab === 'assets' }}
-              onPress={() => setListTab('assets')}
-            >
-              <ThemedText style={[styles.listTab, listTab === 'assets' && styles.listTabActive]}>
-                Assets
-              </ThemedText>
-            </Pressable>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected: listTab === 'watchlist' }}
-              onPress={() => setListTab('watchlist')}
-            >
-              <ThemedText style={[styles.listTab, listTab === 'watchlist' && styles.listTabActive]}>
-                Watchlist
-              </ThemedText>
-            </Pressable>
-          </View>
-
           <View style={styles.assetList}>
-            {listTab === 'assets' && isLoading ? (
+            {isLoading ? (
               <View style={styles.assetRow}>
                 <ActivityIndicator color={Design.colors.primaryContainer} />
                 <ThemedText style={styles.assetSymbol}>Loading wallet balances…</ThemedText>
               </View>
             ) : null}
 
-            {listTab === 'assets' && !isLoading && error && assets.length === 0 ? (
+            {!isLoading && error && assets.length === 0 ? (
               <View style={styles.assetRow}>
                 <ThemedText style={styles.balanceError}>{error.message}</ThemedText>
               </View>
             ) : null}
 
-            {listTab === 'assets' && !isLoading && assets.length > 0
+            {!isLoading && assets.length > 0
               ? assets.map((asset) => (
                   <View key={asset.id} style={styles.assetRow}>
                     <AssetIcon asset={asset} />
@@ -197,29 +149,6 @@ export default function DashboardScreen() {
                     <View style={styles.assetValues}>
                       <ThemedText style={styles.assetAmount}>{asset.amountLabel}</ThemedText>
                       <ThemedText style={styles.assetValue}>{asset.usdLabel}</ThemedText>
-                    </View>
-                  </View>
-                ))
-              : null}
-
-            {listTab === 'watchlist'
-              ? WATCHLIST.map((asset) => (
-                  <View key={asset.id} style={styles.assetRow}>
-                    <MsftAssetIcon />
-                    <View style={styles.assetCopy}>
-                      <ThemedText style={styles.assetName}>{asset.name}</ThemedText>
-                      <ThemedText style={styles.assetSymbol}>{asset.symbol}</ThemedText>
-                    </View>
-                    <View style={styles.assetValues}>
-                      <ThemedText style={styles.assetAmount}>{asset.amount}</ThemedText>
-                      <ThemedText
-                        style={[
-                          styles.assetValue,
-                          asset.sentiment === 'bearish' && styles.assetValueBearish,
-                        ]}
-                      >
-                        {asset.value}
-                      </ThemedText>
                     </View>
                   </View>
                 ))
@@ -297,7 +226,7 @@ const styles = StyleSheet.create({
     borderColor: Design.colors.outlineVariant,
     borderRadius: Design.radius.lg,
     borderWidth: 1,
-    overflow: 'hidden',
+    paddingBottom: Design.space.md,
     paddingHorizontal: Design.space.md,
     paddingTop: Design.space.md,
   },
@@ -318,10 +247,6 @@ const styles = StyleSheet.create({
   portfolioValue: {
     ...DesignType.displayLg,
     color: Design.colors.primary,
-    marginTop: Design.space.sm,
-  },
-  sparkline: {
-    marginHorizontal: -Design.space.md,
     marginTop: Design.space.sm,
   },
   actions: {
@@ -350,19 +275,6 @@ const styles = StyleSheet.create({
     ...DesignType.bodyMd,
     color: Design.colors.onSurface,
     fontWeight: '600',
-  },
-  listTabs: {
-    flexDirection: 'row',
-    gap: Design.space.container,
-    paddingTop: Design.space.sm,
-  },
-  listTab: {
-    ...DesignType.bodyMd,
-    color: Design.colors.onSurfaceVariant,
-    fontWeight: '600',
-  },
-  listTabActive: {
-    color: Design.colors.onSurface,
   },
   tokenLogoWrap: {
     alignItems: 'center',
@@ -418,9 +330,6 @@ const styles = StyleSheet.create({
   assetValue: {
     ...DesignType.dataSm,
     color: Design.colors.secondary,
-  },
-  assetValueBearish: {
-    color: Design.colors.error,
   },
   debug: {
     paddingHorizontal: Design.space.container,

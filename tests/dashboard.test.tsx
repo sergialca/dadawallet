@@ -102,16 +102,6 @@ describe('DashboardScreen', () => {
     expect(screen.getByText('1.5 tKalshi')).toBeOnTheScreen();
   });
 
-  test('switches to the watchlist tab', async () => {
-    const user = userEvent.setup();
-    await render(<DashboardScreen />);
-
-    await user.press(screen.getByRole('tab', { name: 'Watchlist' }));
-
-    expect(screen.queryByText('SOL')).toBeNull();
-    expect(screen.getByText('Microsoft')).toBeOnTheScreen();
-  });
-
   test('opens the profile screen from the user icon', async () => {
     const user = userEvent.setup();
     await render(<DashboardScreen />);
