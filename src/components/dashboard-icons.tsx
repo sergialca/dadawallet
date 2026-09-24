@@ -1,14 +1,4 @@
-import Svg, {
-  Circle,
-  Defs,
-  Line,
-  LinearGradient,
-  Path,
-  Polygon,
-  Rect,
-  Stop,
-  Text as SvgText,
-} from 'react-native-svg';
+import Svg, { Circle, Path, Polygon, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Design } from '@/constants/design';
 
@@ -249,56 +239,6 @@ export function EurcAssetIcon() {
         y="25"
       >
         €
-      </SvgText>
-    </Svg>
-  );
-}
-
-export function MsftAssetIcon() {
-  return (
-    <Svg width={40} height={40} viewBox="0 0 40 40">
-      <Circle cx="20" cy="20" r="20" fill="#1a2430" />
-      <Polygon
-        points="20,8 29,13.2 29,23.8 20,29 11,23.8 11,13.2"
-        fill="none"
-        stroke={Design.colors.onSurfaceVariant}
-        strokeWidth="1.6"
-      />
-      <Polygon points="20,14 24.5,16.6 24.5,21.8 20,24.4 15.5,21.8 15.5,16.6" fill={Design.colors.outline} />
-    </Svg>
-  );
-}
-
-export function PortfolioSparkline() {
-  return (
-    <Svg height={108} viewBox="0 0 320 108" width="100%">
-      <Defs>
-        <LinearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
-          <Stop offset="0" stopColor={Design.colors.success} stopOpacity="0.28" />
-          <Stop offset="1" stopColor={Design.colors.success} stopOpacity="0" />
-        </LinearGradient>
-      </Defs>
-      <Line
-        x1="8"
-        x2="312"
-        y1="78"
-        y2="78"
-        stroke={Design.colors.outlineVariant}
-        strokeDasharray="4 6"
-        strokeWidth="1"
-      />
-      <Path
-        d="M8 86 C 40 84, 58 70, 78 62 C 104 50, 118 78, 148 64 C 176 52, 198 34, 230 38 C 258 42, 278 22, 312 18 L 312 108 L 8 108 Z"
-        fill="url(#sparkFill)"
-      />
-      <Path
-        d="M8 86 C 40 84, 58 70, 78 62 C 104 50, 118 78, 148 64 C 176 52, 198 34, 230 38 C 258 42, 278 22, 312 18"
-        fill="none"
-        stroke={Design.colors.successDim}
-        strokeWidth="2.2"
-      />
-      <SvgText fill={Design.colors.onSurfaceVariant} fontSize="10" fontWeight="700" x="286" y="48">
-        BE
       </SvgText>
     </Svg>
   );
