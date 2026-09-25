@@ -1,5 +1,5 @@
 import { listedStocks } from '@/constants/stocks';
-import { filterStocks, filterStocksByKind, groupStocksByNameLetter } from '@/lib/stock-list';
+import { filterStocks, filterStocksByKind, filterStocksByTickers, groupStocksByNameLetter } from '@/lib/stock-list';
 import type { StockAsset } from '@/types/stocks';
 
 function stock(overrides: Partial<StockAsset> & Pick<StockAsset, 'id' | 'name' | 'ticker'>): StockAsset {
@@ -45,6 +45,16 @@ describe('filterStocksByKind', () => {
     expect(
       filterStocksByKind(listedStocks, 'pre-IPO stock').map((item) => item.ticker)
     ).toEqual(['tOpenAI', 'tKalshi']);
+  });
+});
+
+describe('filterStocksByTickers', () => {
+  test('keeps only the saved tickers', () => {
+    expect(filterStocksByTickers(listedStocks, ['NVDA', 'AAPL']).map((item) => item.ticker)).toEqual([
+      'AAPL',
+      'NVDA',
+    ]);
+    expect(filterStocksByTickers(listedStocks, [])).toEqual([]);
   });
 });
 

@@ -18,6 +18,7 @@ import { Design, DesignType } from '@/constants/design';
 import { MinimumOrderUsdc, type OndoQuoteSide } from '@/constants/ondo';
 import { getStockById } from '@/constants/stocks';
 import { MaxContentWidth } from '@/constants/theme';
+import { useFavoriteStock } from '@/hooks/use-favorite-stock';
 import { useTradeQuote } from '@/hooks/use-trade-quote';
 import { useUsdcBalance } from '@/hooks/use-usdc-balance';
 import { formatAmount, parseAmount } from '@/lib/format-amount';
@@ -36,6 +37,7 @@ export default function BuySellScreen() {
 
   const notionalUsdc = parseAmount(amountInput);
   const { balance: usdcBalance, isLoading: usdcLoading, refresh: refreshBalance } = useUsdcBalance();
+  const { error: favoriteError, isFavorite, toggle: toggleFavorite } = useFavoriteStock(stock?.ticker ?? '');
   const { quote, isLoading: quoteLoading } = useTradeQuote({
     mint: stock?.kind === 'pre-IPO stock' ? stock.contractAddress : '',
     notionalUsdc,
@@ -100,16 +102,26 @@ export default function BuySellScreen() {
             <Pressable accessibilityLabel="Go back" onPress={() => router.back()} style={styles.iconCircle}>
               <ThemedText style={styles.backChevron}>‹</ThemedText>
             </Pressable>
-            <View style={styles.titleBlock}>
+            <View pointerEvents="none" style={styles.titleBlock}>
               <Image contentFit="contain" source={{ uri: stock.logoUrl }} style={styles.headerLogo} />
-              <View>
-                <ThemedText style={styles.ticker}>{stock.ticker}</ThemedText>
-                <ThemedText style={styles.meta}>{stock.name}</ThemedText>
+              <View style={styles.titleCopy}>
+                <ThemedText numberOfLines={1} style={styles.ticker}>{stock.ticker}</ThemedText>
+                <ThemedText numberOfLines={1} style={styles.meta}>{stock.name}</ThemedText>
               </View>
             </View>
-            <View style={styles.iconCircle}>
-              <ThemedText style={styles.star}>★</ThemedText>
-            </View>
+            <Pressable
+              accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Save as favorite'}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => {
+                void toggleFavorite();
+              }}
+              style={styles.starButton}
+            >
+              <ThemedText style={[styles.star, !isFavorite && styles.starIdle]}>
+                {isFavorite ? '★' : '☆'}
+              </ThemedText>
+            </Pressable>
           </View>
 
           <View style={styles.priceCard}>
@@ -199,6 +211,7 @@ export default function BuySellScreen() {
               </ThemedText>
             ) : null}
             {actionError ? <ThemedText style={styles.error}>{actionError}</ThemedText> : null}
+            {favoriteError ? <ThemedText style={styles.error}>{favoriteError}</ThemedText> : null}
 
             <Pressable
               accessibilityRole="button"
@@ -279,9 +292,22 @@ const styles = StyleSheet.create({
     borderColor: Design.colors.outlineVariant,
     borderRadius: Design.radius.full,
     borderWidth: 1,
+    flexShrink: 0,
     height: 40,
     justifyContent: 'center',
     width: 40,
+  },
+  starButton: {
+    alignItems: 'center',
+    backgroundColor: Design.colors.surfaceContainer,
+    borderColor: Design.colors.outlineVariant,
+    borderRadius: Design.radius.full,
+    borderWidth: 1,
+    flexShrink: 0,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+    zIndex: 1,
   },
   backChevron: {
     color: Design.colors.onSurface,
@@ -293,10 +319,21 @@ const styles = StyleSheet.create({
     color: Design.colors.success,
     fontSize: 18,
   },
+  starIdle: {
+    color: Design.colors.onSurfaceVariant,
+  },
   titleBlock: {
     alignItems: 'center',
+    flex: 1,
     flexDirection: 'row',
     gap: Design.space.sm,
+    justifyContent: 'center',
+    minWidth: 0,
+    paddingHorizontal: Design.space.sm,
+  },
+  titleCopy: {
+    flexShrink: 1,
+    minWidth: 0,
   },
   headerLogo: {
     height: 28,

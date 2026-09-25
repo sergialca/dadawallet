@@ -8,6 +8,10 @@ jest.mock('expo-router', () => ({
   useRouter: jest.fn(),
 }));
 
+jest.mock('@/hooks/use-favorite-stock', () => ({
+  useFavoriteTickers: () => ({ error: null, tickers: ['AAPL'] }),
+}));
+
 const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
 
@@ -49,6 +53,25 @@ describe('TradeScreen', () => {
     await user.press(screen.getByText('All'));
     expect(screen.getByText('Apple Inc.')).toBeOnTheScreen();
     expect(screen.getByText('Aurora Innovation, Inc.')).toBeOnTheScreen();
+  });
+
+  test('filters the list to saved favorites', async () => {
+    const user = userEvent.setup();
+    await render(<TradeScreen />);
+
+    await user.press(screen.getByLabelText('Favorites'));
+
+    expect(screen.getByRole('button', { name: 'Favorites', selected: true })).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'All', selected: true })).toBeNull();
+    expect(screen.getByText('Apple Inc.')).toBeOnTheScreen();
+    expect(screen.queryByText('NVIDIA Corporation')).toBeNull();
+
+    await user.press(screen.getByText('Stocks'));
+
+    expect(screen.queryByRole('button', { name: 'Favorites', selected: true })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Stocks', selected: true })).toBeOnTheScreen();
+    expect(screen.getByText('Apple Inc.')).toBeOnTheScreen();
+    expect(screen.queryByText('Kalshi')).toBeNull();
   });
 
   test('filters the list from the search field', async () => {

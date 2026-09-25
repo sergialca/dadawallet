@@ -1,6 +1,6 @@
 import type { StockAsset, StockKind } from '@/types/stocks';
 
-export type StockListFilter = 'all' | StockKind;
+export type StockListFilter = 'all' | 'favorites' | StockKind;
 
 export const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -24,12 +24,20 @@ export function filterStocks(stocks: StockAsset[], query: string): StockAsset[] 
   });
 }
 
-export function filterStocksByKind(stocks: StockAsset[], filter: StockListFilter): StockAsset[] {
+export function filterStocksByKind(
+  stocks: StockAsset[],
+  filter: Exclude<StockListFilter, 'favorites'>,
+): StockAsset[] {
   if (filter === 'all') {
     return stocks;
   }
 
   return stocks.filter((stock) => stock.kind === filter);
+}
+
+export function filterStocksByTickers(stocks: StockAsset[], tickers: string[]): StockAsset[] {
+  const saved = new Set(tickers);
+  return stocks.filter((stock) => saved.has(stock.ticker));
 }
 
 function sectionTitleForName(name: string): string {
