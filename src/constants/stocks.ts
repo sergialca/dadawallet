@@ -1,0 +1,256 @@
+import { SolanaUsdcDecimals, SolanaUsdcMint } from '@/constants/tokens';
+import type { StockCatalog } from '@/types/stocks';
+
+export const stockCatalog: StockCatalog = {
+  network: 'solana',
+  chainId: 'solana-900',
+  provider: 'Ondo Global Markets',
+  settlementToken: {
+    symbol: 'USDC',
+    address: SolanaUsdcMint,
+    decimals: SolanaUsdcDecimals,
+  },
+  stocks: [
+    {
+      id: 'aapl-ondo',
+      ticker: 'AAPL',
+      name: 'Apple Inc.',
+      tokenSymbol: 'AAPLon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Consumer Electronics',
+      description:
+        'Designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/AAPL?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'msft-ondo',
+      ticker: 'MSFT',
+      name: 'Microsoft Corporation',
+      tokenSymbol: 'MSFTon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Enterprise Software & Cloud',
+      description:
+        'Develops and supports software, services, devices and cloud solutions including Azure, Windows, and Office.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/MSFT?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'nvda-ondo',
+      ticker: 'NVDA',
+      name: 'NVIDIA Corporation',
+      tokenSymbol: 'NVDAon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Semiconductors & AI',
+      description:
+        'Pioneer of GPU computing and leading infrastructure provider for artificial intelligence and accelerated computing.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/NVDA?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'amzn-ondo',
+      ticker: 'AMZN',
+      name: 'Amazon.com, Inc.',
+      tokenSymbol: 'AMZNon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'E-Commerce & Cloud',
+      description:
+        'Global e-commerce marketplace, cloud computing provider via AWS, digital streaming, and logistics leader.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/AMZN?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'googl-ondo',
+      ticker: 'GOOGL',
+      name: 'Alphabet Inc.',
+      tokenSymbol: 'GOOGLon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Internet Services & AI',
+      description:
+        'Holding company for Google Search, YouTube, Android, Google Cloud, and DeepMind artificial intelligence ventures.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/GOOGL?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'meta-ondo',
+      ticker: 'META',
+      name: 'Meta Platforms, Inc.',
+      tokenSymbol: 'METAon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Social Media & Metaverse',
+      description:
+        'Connects billions of people across Facebook, Instagram, WhatsApp, Messenger, and develops next-generation spatial computing.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/META?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'tsla-ondo',
+      ticker: 'TSLA',
+      name: 'Tesla, Inc.',
+      tokenSymbol: 'TSLAon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Electric Vehicles & Clean Energy',
+      description:
+        'Designs, manufactures, and sells electric vehicles, energy storage systems, solar panels, and autonomous driving tech.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/TSLA?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'spcx-ondo',
+      ticker: 'SPCX',
+      name: 'SpaceX',
+      tokenSymbol: 'SPCXon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Aerospace',
+      description:
+        'Designs, manufactures, and launches rockets and spacecraft, and operates the Starlink satellite internet constellation.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/SPCX?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'intc-ondo',
+      ticker: 'INTC',
+      name: 'Intel Corporation',
+      tokenSymbol: 'INTCon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Semiconductors',
+      description:
+        'Designs and manufactures CPUs, GPUs, and other semiconductor products for PCs, data centers, and edge computing.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/INTC?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'mstr-ondo',
+      ticker: 'MSTR',
+      name: 'MicroStrategy, Inc.',
+      tokenSymbol: 'MSTRon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Enterprise Software & Bitcoin',
+      description:
+        'Provides enterprise analytics software and holds a large corporate bitcoin treasury.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/MSTR?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'aur-ondo',
+      ticker: 'AUR',
+      name: 'Aurora Innovation, Inc.',
+      tokenSymbol: 'AURon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Autonomous Vehicles',
+      description:
+        'Develops self-driving technology for trucks and passenger vehicles through the Aurora Driver platform.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/AUR?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'hood-ondo',
+      ticker: 'HOOD',
+      name: 'Robinhood Markets, Inc.',
+      tokenSymbol: 'HOODon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Digital Brokerage',
+      description:
+        'Operates a commission-free brokerage platform for stocks, options, crypto, and related financial products.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/HOOD?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'coin-ondo',
+      ticker: 'COIN',
+      name: 'Coinbase Global, Inc.',
+      tokenSymbol: 'COINon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Crypto Exchange',
+      description:
+        'Operates a cryptocurrency exchange and related custody, staking, and infrastructure services.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/COIN?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'nok-ondo',
+      ticker: 'NOK',
+      name: 'Nokia Corporation',
+      tokenSymbol: 'NOKon',
+      contractAddress: '',
+      decimals: 18,
+      category: 'Telecommunications Equipment',
+      description:
+        'Provides network infrastructure, 5G equipment, and related telecommunications software and services.',
+      logoUrl: 'https://assets.parqet.com/logos/symbol/NOK?format=png',
+      isAvailable: true,
+      kind: 'stock',
+    },
+    {
+      id: 'openai-tessera',
+      ticker: 'tOpenAI',
+      name: 'OpenAI',
+      tokenSymbol: 'tOpenAI',
+      contractAddress: 'oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ',
+      decimals: 9,
+      category: 'Artificial Intelligence',
+      description:
+        'Tessera T-token for tokenized pre-IPO economic exposure to OpenAI. Not equity and not an Ondo Global Markets stock.',
+      logoUrl: 'https://logo.clearbit.com/openai.com',
+      isAvailable: true,
+      kind: 'pre-IPO stock',
+    },
+    {
+      id: 'kalshi-tessera',
+      ticker: 'tKalshi',
+      name: 'Kalshi',
+      tokenSymbol: 'tKalshi',
+      contractAddress: 'TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ',
+      decimals: 9,
+      category: 'Prediction Markets',
+      description:
+        'Tessera T-token for tokenized pre-IPO economic exposure to Kalshi. Not equity and not an Ondo Global Markets stock.',
+      logoUrl: 'https://logo.clearbit.com/kalshi.com',
+      isAvailable: true,
+      kind: 'pre-IPO stock',
+    },
+  ],
+};
+
+export const listedStocks = stockCatalog.stocks.filter((stock) => stock.isAvailable);
+
+export function getStockById(stockId: string) {
+  return listedStocks.find((stock) => stock.id === stockId) ?? null;
+}
+
+export function getStockByMint(mint: string) {
+  if (!mint) {
+    return null;
+  }
+  return listedStocks.find((stock) => stock.contractAddress === mint) ?? null;
+}
+
+export function isCatalogSolanaMint(mint: string) {
+  return getStockByMint(mint) != null;
+}

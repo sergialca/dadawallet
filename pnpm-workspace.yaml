@@ -1,3 +1,8 @@
+allowBuilds:
+  '@parcel/watcher': true
+  bufferutil: true
+  unrs-resolver: true
+  utf-8-validate: true
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.17'
   - '@expo/fingerprint@0.20.9'

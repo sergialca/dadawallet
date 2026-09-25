@@ -1,56 +1,110 @@
-# Welcome to your Expo app 👋
+# dadawallet
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+dadawallet is a mobile app for holding and trading onchain assets from a single embedded wallet. Sign in with email, get a Solana wallet created for you, then:
 
-## Get started
+- See SOL and USDC balances on the dashboard
+- Browse and trade tokenized stocks through [Ondo Global Markets](https://ondo.finance)
+- Review incoming and outgoing transfers on the activity screen
+- Open profile to copy the wallet address or log out
 
-1. Install dependencies
+The wallet lives on **Solana Devnet** for balances and activity. Stock quotes use Ondo on Solana (`solana-900`).
 
-   ```bash
-   npm install
-   ```
+## Stack
 
-2. Start the app
 
-   ```bash
-   npx expo start
-   ```
+| Layer       | Choice                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------ |
+| App runtime | [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/) / React Native 0.86 / React 19                        |
+| Navigation  | [Expo Router](https://docs.expo.dev/router/introduction/) (file-based routes in `src/app`)                   |
+| Auth + keys | [Privy](https://docs.privy.io/basics/react-native/installation) embedded Solana wallets (`@privy-io/expo`)   |
+| Chain I/O   | Solana JSON-RPC (`getBalance`, SPL token accounts) plus Privy `signAndSendTransaction`                       |
+| Transfers   | Solana `getSignaturesForAddress` / `getTransaction`                                                          |
+| Equities    | Ondo Global Markets HTTP API + onchain mint/redeem                                                           |
+| UI          | React Native, the local design tokens in `src/constants/design.ts`                                           |
+| Tests       | Jest + Testing Library (`pnpm test`)                                                                         |
 
-In the output, you'll find options to open the app in a
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Privy, passkeys, and secure storage need a **native development build**. Expo Go is not enough.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Local setup
 
-## Get a fresh project
 
-When you're ready, run:
+
+### Prerequisites
+
+- **Node.js 22.13+** (required by Expo SDK 57)
+- **[pnpm](https://pnpm.io/installation)** (this repo uses `pnpm-lock.yaml`)
+- A [Privy](https://dashboard.privy.io) app with a **React Native app client**
+- Optional: `EXPO_PUBLIC_SOLANA_RPC_URL` for a custom Solana Devnet node (defaults to `https://api.devnet.solana.com`)
+- Optional: an [Ondo](https://ondo.finance) API key for live stock quotes
+- **iOS:** Xcode and a Simulator (or device)
+- **Android:** Android Studio, SDK, and an emulator (or device)
+
+
+
+### One-shot setup
+
+From the repo root:
 
 ```bash
-npm run reset-project
+pnpm setup
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+That script:
 
-### Other setup steps
+1. Checks the Node.js version
+2. Copies `.env.example` → `.env` if you do not already have `.env`
+3. Runs `pnpm install`
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Then edit `.env`:
 
-## Learn more
+```bash
+EXPO_PUBLIC_PRIVY_APP_ID=
+EXPO_PUBLIC_PRIVY_CLIENT_ID=
+EXPO_PUBLIC_SOLANA_RPC_URL=
+EXPO_PUBLIC_ONDO_API_KEY=
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+`EXPO_PUBLIC_PRIVY_*` are required or the app shows a missing-env screen. Restart Metro after any `.env` change (`EXPO_PUBLIC_*` is inlined at bundle time).
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Run the app
 
-## Join the community
+```bash
+# iOS simulator / device (builds a native dev client)
+pnpm ios
 
-Join our community of developers creating universal apps.
+# Android emulator / device
+pnpm android
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Metro only (after a native client already exists)
+pnpm start
+```
+
+`pnpm web` starts the web bundler, but Privy’s React Native SDK does not support web.
+
+### Other scripts
+
+
+| Script         | What it does                                       |
+| -------------- | -------------------------------------------------- |
+| `pnpm setup`   | Node check, `.env` bootstrap, install dependencies |
+| `pnpm start`   | Start the Expo dev server                          |
+| `pnpm ios`     | Compile and launch the iOS development build       |
+| `pnpm android` | Compile and launch the Android development build   |
+| `pnpm test`    | Run Jest once                                      |
+| `pnpm lint`    | Run Expo lint                                      |
+
+
+
+
+## Project layout
+
+```
+src/app/            Screens (Expo Router)
+src/components/     Shared UI
+src/hooks/          Wallet, balances, quotes, activity
+src/lib/            Solana RPC, transfers, and formatting
+src/constants/      Tokens, Ondo, design system
+```
+
+Authenticated routes sit under `src/app/(app)/` and are wrapped in Privy’s `AuthBoundary`.
