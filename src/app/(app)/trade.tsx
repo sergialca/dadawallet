@@ -18,10 +18,12 @@ import { ThemedText } from '@/components/themed-text';
 import { Design, DesignType } from '@/constants/design';
 import { listedStocks, stockCatalog } from '@/constants/stocks';
 import { MaxContentWidth } from '@/constants/theme';
+import { useFavoriteTickers } from '@/hooks/use-favorite-stock';
 import {
   ALPHABET,
   filterStocks,
   filterStocksByKind,
+  filterStocksByTickers,
   groupStocksByNameLetter,
   type StockListFilter,
 } from '@/lib/stock-list';
@@ -86,12 +88,15 @@ export default function TradeScreen() {
   const listRef = useRef<SectionListType<StockAsset>>(null);
   const [query, setQuery] = useState('');
   const [listFilter, setListFilter] = useState<StockListFilter>('all');
+  const { error: favoritesError, tickers: favoriteTickers } = useFavoriteTickers();
 
-  const sections = useMemo(
-    () =>
-      groupStocksByNameLetter(filterStocks(filterStocksByKind(listedStocks, listFilter), query)),
-    [listFilter, query]
-  );
+  const sections = useMemo(() => {
+    const visible =
+      listFilter === 'favorites'
+        ? filterStocksByTickers(listedStocks, favoriteTickers)
+        : filterStocksByKind(listedStocks, listFilter);
+    return groupStocksByNameLetter(filterStocks(visible, query));
+  }, [favoriteTickers, listFilter, query]);
   const populatedLetters = useMemo(
     () => new Set(sections.map((section) => section.title)),
     [sections]
@@ -142,7 +147,23 @@ export default function TradeScreen() {
               </Pressable>
             );
           })}
+          <Pressable
+            accessibilityLabel="Favorites"
+            accessibilityRole="button"
+            accessibilityState={{ selected: listFilter === 'favorites' }}
+            onPress={() => {
+              setListFilter('favorites');
+            }}
+            style={[styles.filterChip, listFilter === 'favorites' && styles.filterChipSelected]}
+          >
+            <ThemedText style={[styles.starFilter, listFilter === 'favorites' && styles.filterLabelSelected]}>
+              {listFilter === 'favorites' ? '★' : '☆'}
+            </ThemedText>
+          </Pressable>
         </View>
+        {listFilter === 'favorites' && favoritesError ? (
+          <ThemedText style={styles.favoritesError}>{favoritesError}</ThemedText>
+        ) : null}
 
         <View style={styles.listWrap}>
           <SectionList
@@ -286,6 +307,17 @@ const styles = StyleSheet.create({
   },
   filterLabelSelected: {
     color: Design.colors.onPrimary,
+  },
+  starFilter: {
+    color: Design.colors.success,
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  favoritesError: {
+    ...DesignType.dataSm,
+    color: Design.colors.error,
+    marginHorizontal: Design.space.container,
+    marginTop: Design.space.sm,
   },
   listWrap: {
     flex: 1,
