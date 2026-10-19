@@ -9,6 +9,10 @@ Those stocks come from two providers:
 
 You can also review incoming and outgoing transfers, and copy the wallet address or log out from the profile screen.
 
+## Promotional video
+
+[Video](https://youtu.be/3U56O1c-NE8)
+
 ## Stack
 
 
